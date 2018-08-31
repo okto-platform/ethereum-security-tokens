@@ -1,0 +1,21 @@
+{
+  "name": "slingr-security-tokens",
+  "version": "0.0.1",
+  "description": "Contracts to create SLINGR security tokens",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slingr-stack/slingr-security-tokens.git"
+  },
+  "keywords": [
+    "tokens",
+    "security",
+    "solidity",
+    "ERC20"
+  ],
+  "author": "SLINGR",
+  "license": "MIT",
+  "homepage": "https://github.com/slingr-stack/slingr-security-tokens#readme",
+  "dependencies": {
+    "openzeppelin-solidity": "1.12.0"
+  }
+}
