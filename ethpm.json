@@ -1,0 +1,16 @@
+{
+    "package_name": "slingr-security-tokens",
+    "version": "0.0.1",
+    "description": "Contracts to create SLINGR security tokens",
+    "authors": [
+        "Diego Gaviola <dgaviola@slingr.io>"
+    ],
+    "keywords": [
+        "tokens",
+        "security"
+    ],
+    "dependencies": {
+        "zeppelin": "1.3.0"
+    },
+    "license": "MIT"
+}
