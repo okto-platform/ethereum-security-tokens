@@ -2,10 +2,12 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../transfermanagers/TransferManager.sol";
 
 contract SlingrSecurityToken is StandardToken,Ownable {
 
     address tokenOfferingAddress;
+    TransferManager[] transferManagers;
 
     modifier onlyTokenOffering {
         require(msg.sender == tokenOfferingAddress);
@@ -73,7 +75,7 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     public
     onlyOwner
     {
-        // TODO
+        transferManagers
     }
 
     function release()
