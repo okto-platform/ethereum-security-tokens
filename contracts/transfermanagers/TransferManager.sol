@@ -1,14 +1,7 @@
 pragma solidity ^0.4.24;
 
-interface TransferManager {
+contract TransferManager {
     enum TransferAllowanceResult {NotAllowed, Allowed, ForceNowAllowed, ForceAllowed}
-
-    function createInstance
-    (
-        bytes _data
-    )
-    public
-    returns(address);
 
     function isTransferAllowed
     (

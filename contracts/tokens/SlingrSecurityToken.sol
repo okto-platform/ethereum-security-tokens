@@ -75,7 +75,6 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     public
     onlyOwner
     {
-        transferManagers
     }
 
     function release()
