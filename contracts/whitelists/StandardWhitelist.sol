@@ -39,9 +39,24 @@ contract StandardWhitelist is Whitelist {
 }
 
 contract StandardWhitelistFactory {
-    function createInstance()
-    public returns(StandardWhitelist)
+    mapping(string => address) instances;
+
+    event InstanceCreated(address contractAddress, string name, address sender);
+
+    function createInstance(string _name)
+    public returns(address)
     {
-        return new StandardWhitelist();
+        require(instances[_name] == address(0), "Name is already taken");
+        StandardWhitelist instance = new StandardWhitelist();
+        instance.transferOwnership(msg.sender);
+        instances[_name] = instance;
+        emit InstanceCreated(instance, _name, msg.sender);
+        return instance;
+    }
+
+    function getInstance(string _name)
+    public view returns(address)
+    {
+        return instances[_name];
     }
 }

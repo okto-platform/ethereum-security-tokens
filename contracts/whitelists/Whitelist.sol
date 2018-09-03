@@ -9,29 +9,29 @@ contract Whitelist is Ownable {
     mapping(address => mapping(string => uint)) uintProperties;
     mapping(address => mapping(string => bool)) boolProperties;
 
-    function setProperty(address _investor, string _property, string _value)
+    function setStringProperty(address _investor, string _property, string _value)
     public onlyOwner
     {
-        require(checkPropertyType(_property, PropertyType.String));
-        require(isValidValueForProperty(_property, _value));
+        require(checkPropertyType(_property, PropertyType.String), "Property is not valid or not a string");
+        require(isValidValueForProperty(_property, _value), "Value is not valid for this property");
 
         stringProperties[_investor][_property] = _value;
     }
 
-    function setProperty(address _investor, string _property, bool _value)
+    function setBooleanProperty(address _investor, string _property, bool _value)
     public onlyOwner
     {
-        require(checkPropertyType(_property, PropertyType.Boolean));
-        require(isValidValueForProperty(_property, _value));
+        require(checkPropertyType(_property, PropertyType.Boolean), "Property is not valid or not boolean");
+        require(isValidValueForProperty(_property, _value), "Value is not valid for this property");
 
         boolProperties[_investor][_property] = _value;
     }
 
-    function setProperty(address _investor, string _property, uint _value)
+    function setNumberProperty(address _investor, string _property, uint _value)
     public onlyOwner
     {
-        require(checkPropertyType(_property, PropertyType.Number));
-        require(isValidValueForProperty(_property, _value));
+        require(checkPropertyType(_property, PropertyType.Number), "Property is not valid or not a number");
+        require(isValidValueForProperty(_property, _value), "Value is not valid for this property");
 
         uintProperties[_investor][_property] = _value;
     }
