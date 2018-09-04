@@ -9,7 +9,7 @@ contract Whitelist is Ownable {
     mapping(address => mapping(string => uint)) uintProperties;
     mapping(address => mapping(string => bool)) boolProperties;
 
-    function setStringProperty(address _investor, string _property, string _value)
+    function setProperty(address _investor, string _property, string _value)
     public onlyOwner
     {
         require(checkPropertyType(_property, PropertyType.String), "Property is not valid or not a string");
@@ -18,7 +18,7 @@ contract Whitelist is Ownable {
         stringProperties[_investor][_property] = _value;
     }
 
-    function setBooleanProperty(address _investor, string _property, bool _value)
+    function setProperty(address _investor, string _property, bool _value)
     public onlyOwner
     {
         require(checkPropertyType(_property, PropertyType.Boolean), "Property is not valid or not boolean");
@@ -27,7 +27,7 @@ contract Whitelist is Ownable {
         boolProperties[_investor][_property] = _value;
     }
 
-    function setNumberProperty(address _investor, string _property, uint _value)
+    function setProperty(address _investor, string _property, uint _value)
     public onlyOwner
     {
         require(checkPropertyType(_property, PropertyType.Number), "Property is not valid or not a number");
@@ -62,52 +62,108 @@ contract Whitelist is Ownable {
         }
     }
 
-    function checkPropertyEquals(address investor, string property, string value)
+    function checkPropertyEquals(address _investor, string _property, string _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.String));
 
+        string propValue = stringProperties[_investor][_property];
+        if (keccak256(propValue) == keccak256(_value)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    function checkPropertyNotEquals(address investor, string property, string value)
+    function checkPropertyNotEquals(address _investor, string _property, string _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.String));
 
+        string propValue = stringProperties[_investor][_property];
+        if (keccak256(propValue) == keccak256(_value)) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
-    function checkPropertyEquals(address investor, string property, uint256 value)
+    function checkPropertyEquals(address _investor, string _property, uint256 _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.Number));
 
+        uint propValue = uintProperties[_investor][_property];
+        if (propValue == _value) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    function checkPropertyNotEquals(address investor, string property, uint256 value)
+    function checkPropertyNotEquals(address _investor, string _property, uint256 _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.Number));
 
+        uint propValue = uintProperties[_investor][_property];
+        if (propValue == _value) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
-    function checkPropertyGreater(address investor, string property, uint256 value)
+    function checkPropertyGreater(address _investor, string _property, uint256 _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.Number));
 
+        uint propValue = uintProperties[_investor][_property];
+        if (propValue > _value) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    function checkPropertyGreaterOrEquals(address investor, string property, uint256 value)
+    function checkPropertyGreaterOrEquals(address _investor, string _property, uint256 _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.Number));
 
+        uint propValue = uintProperties[_investor][_property];
+        if (propValue >= _value) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    function checkPropertyLess(address investor, string property, uint256 value)
+    function checkPropertyLess(address _investor, string _property, uint256 _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.Number));
 
+        uint propValue = uintProperties[_investor][_property];
+        if (propValue < _value) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    function checkPropertyLessOrEquals(address investor, string property, uint256 value)
+    function checkPropertyLessOrEquals(address _investor, string _property, uint256 _value)
     public returns(bool)
     {
+        require(checkPropertyType(_property, PropertyType.Number));
 
+        uint propValue = uintProperties[_investor][_property];
+        if (propValue <= _value) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     function isValidValueForProperty(string _property, string _value)

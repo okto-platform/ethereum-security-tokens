@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "./Whitelist.sol";
+import "../utils/Factory.sol";
 
 contract StandardWhitelist is Whitelist {
     mapping (string => PropertyType) propertiesType;
@@ -38,25 +39,14 @@ contract StandardWhitelist is Whitelist {
     }
 }
 
-contract StandardWhitelistFactory {
-    mapping(string => address) instances;
-
-    event InstanceCreated(address contractAddress, string name, address sender);
-
+contract StandardWhitelistFactory is Factory {
     function createInstance(string _name)
     public returns(address)
     {
-        require(instances[_name] == address(0), "Name is already taken");
+        checkUniqueName(_name);
         StandardWhitelist instance = new StandardWhitelist();
         instance.transferOwnership(msg.sender);
-        instances[_name] = instance;
-        emit InstanceCreated(instance, _name, msg.sender);
+        addInstance(instance, _name);
         return instance;
-    }
-
-    function getInstance(string _name)
-    public view returns(address)
-    {
-        return instances[_name];
     }
 }
