@@ -40,13 +40,12 @@ contract StandardWhitelist is Whitelist {
 }
 
 contract StandardWhitelistFactory is Factory {
-    function createInstance(string _name)
+    function createInstance()
     public returns(address)
     {
-        checkUniqueName(_name);
         StandardWhitelist instance = new StandardWhitelist();
         instance.transferOwnership(msg.sender);
-        addInstance(instance, _name);
+        addInstance(instance);
         return instance;
     }
 }

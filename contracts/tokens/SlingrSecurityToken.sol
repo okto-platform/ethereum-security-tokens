@@ -96,10 +96,9 @@ contract SlingrSecurityTokenFactory is Factory {
     function createInstance(string _name, string _symbol, uint8 _decimals)
     public returns(address)
     {
-        checkUniqueName(_symbol);
         SlingrSecurityToken instance = new SlingrSecurityToken(_name, _symbol, _decimals);
         instance.transferOwnership(msg.sender);
-        addInstance(instance, _symbol);
+        addInstance(instance);
         return instance;
     }
 }

@@ -7,14 +7,15 @@ contract TokenOffering is Pausable {
     enum TokenOfferingStatus {Draft, InProgress, Ended}
 
     mapping(address => uint256) tokenAllocations;
-    uint256 totalAllocatedTokens;
-    uint256 numberOfInvestors;
+    uint256 public totalAllocatedTokens;
+    uint256 public numberOfInvestors;
     address tokenAddress;
     uint256 startTimestamp;
     uint256 endTimestamp;
+    address[] modules;
     TokenOfferingStatus status;
 
-    event TokensAllocated(address to, uint256 amount);
+    event TokensMinted(address to, uint256 amount);
     event TokenOfferingStarted(uint256 timestamp);
     event TokenOfferingEnded(uint256 timestamp);
 
@@ -28,7 +29,10 @@ contract TokenOffering is Pausable {
         _;
     }
 
-    constructor() {
+    constructor(address _tokenAddress) {
+        require(_tokenAddress != address(0), "Token address must be provided");
+        // TODO probably we should verify the address is the one for a token contract
+        tokenAddress = _tokenAddress;
         status = TokenOfferingStatus.Draft;
     }
 
@@ -44,7 +48,7 @@ contract TokenOffering is Pausable {
         }
         tokenAllocations[_to] = currentTokensAllocation + _amount;
         mint(_to, _amount);
-        TokensAllocated(_to, _amount);
+        emit TokensMinted(_to, _amount);
         // TODO run hooks after tokens have been allocated
     }
 
@@ -55,20 +59,12 @@ contract TokenOffering is Pausable {
         token.mint(_to, _amount);
     }
 
-    function setToken(address _tokenAddress)
-    public onlyOwner draft
-    {
-        tokenAddress = _tokenAddress;
-    }
-
     function start()
     public onlyOwner draft
     {
-        require(tokenAddress != address(0), "Token must be associated to token offering");
-
         startTimestamp = now;
         status = TokenOfferingStatus.InProgress;
-        TokenOfferingStarted(startTimestamp);
+        emit TokenOfferingStarted(startTimestamp);
     }
 
     function end()
@@ -76,6 +72,18 @@ contract TokenOffering is Pausable {
     {
         endTimestamp = now;
         status = TokenOfferingStatus.Ended;
-        TokenOfferingEnded(endTimestamp);
+        emit TokenOfferingEnded(endTimestamp);
+    }
+
+    function addModule(address _moduleAddress)
+    public onlyOwner draft
+    {
+        modules.push(_moduleAddress);
+    }
+
+    function removeModule(address _moduleAddress)
+    public onlyOwner draft
+    {
+        // TODO we should remove the element in the array
     }
 }
