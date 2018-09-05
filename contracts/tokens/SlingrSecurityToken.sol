@@ -45,19 +45,57 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     function transfer(address _to, uint256 _value)
     public released returns(bool)
     {
-        // TODO execute transfer managers at this point
-        return super.transfer(_to, _value);
+        bool allowTransfer = validateTransfer(msg.sender, _to, _value);
+        if (allowTransfer) {
+            return super.transfer(_to, _value);
+        } else {
+            revert("Transfer is not allowed");
+        }
     }
 
 
     function transferFrom(address _from, address _to, uint256 _value)
     public released returns(bool)
     {
-        // TODO execute transfer managers at this point
-        return super.transferFrom(_from, _to, _value);
+        bool allowTransfer = validateTransfer(_from, _to, _value);
+        if (allowTransfer) {
+            return super.transferFrom(_from, _to, _value);
+        } else {
+            revert("Transfer is not allowed");
+        }
+    }
+
+    function validateTransfer(address _from, address _to, uint256 _value)
+    internal released returns(bool)
+    {
+        bool allowTransfer = true;
+        for (uint8 i = 0; i < modules.length; i++) {
+            TokenModule module = TokenModule(modules[i]);
+            TokenModule.TransferAllowanceResult result = module.isTransferAllowed(_from, _to, _value);
+            if (result == TokenModule.TransferAllowanceResult.ForceAllowed) {
+                allowTransfer = true;
+                break;
+            } else if (result == TokenModule.TransferAllowanceResult.ForceNotAllowed) {
+                allowTransfer = false;
+                break;
+            } else if (result == TokenModule.TransferAllowanceResult.Allowed) {
+                // we don't do anything in this case
+            } else if (result == TokenModule.TransferAllowanceResult.ForceNotAllowed) {
+                allowTransfer = false;
+            } else {
+                revert("Wrong response from module");
+            }
+        }
+        return allowTransfer;
     }
 
     function mint(address _to, uint256 _amount)
+    public onlyTokenOffering released
+    {
+        // TODO only token offering contract can call this method
+    }
+
+    function burn(address _to, uint256 _amount)
     public onlyTokenOffering released
     {
         // TODO only token offering contract can call this method
@@ -74,7 +112,8 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     function addModule(address _moduleAddress)
     public onlyOwner draft
     {
-        // TODO implement this method
+        // TODO we should verify it is a valid module
+        modules.push(_moduleAddress);
     }
 
     function removeModule(address _moduleAddress)

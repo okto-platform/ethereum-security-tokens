@@ -29,6 +29,11 @@ contract TokenOffering is Pausable {
         _;
     }
 
+    modifier ended() {
+        require(status == TokenOfferingStatus.Ended, "Token offering must be ended to execute this operation");
+        _;
+    }
+
     constructor(address _tokenAddress) {
         require(_tokenAddress != address(0), "Token address must be provided");
         // TODO probably we should verify the address is the one for a token contract
@@ -53,10 +58,18 @@ contract TokenOffering is Pausable {
     }
 
     function mint(address _to, uint256 _amount)
-    internal inProgress
+    internal
     {
         SlingrSecurityToken token = SlingrSecurityToken(tokenAddress);
         token.mint(_to, _amount);
+    }
+
+    function burn(address _to, uint256 _amount)
+    internal
+    {
+        // TODO check balances before burning tokens
+        SlingrSecurityToken token = SlingrSecurityToken(tokenAddress);
+        token.burn(_to, _amount);
     }
 
     function start()
@@ -78,6 +91,7 @@ contract TokenOffering is Pausable {
     function addModule(address _moduleAddress)
     public onlyOwner draft
     {
+        // TODO we should validate it is a valid module
         modules.push(_moduleAddress);
     }
 
