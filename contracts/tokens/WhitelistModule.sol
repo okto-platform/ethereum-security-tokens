@@ -1,8 +1,8 @@
 pragma solidity ^0.4.24;
 
-contract TransferManager {
-    enum TransferAllowanceResult {NotAllowed, Allowed, ForceNowAllowed, ForceAllowed}
+import "./TokenModule.sol";
 
+contract WhitelistModule is TokenModule {
     function isTransferAllowed
     (
         address _from,
@@ -10,5 +10,7 @@ contract TransferManager {
         uint256 _amount
     )
     public
-    returns(uint);
+    returns(uint) {
+
+    }
 }
