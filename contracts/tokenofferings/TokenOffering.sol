@@ -15,7 +15,6 @@ contract TokenOffering is Pausable {
     address[] modules;
     TokenOfferingStatus public status;
 
-    event TokensMinted(address to, uint256 amount);
     event TokenOfferingStarted(uint256 timestamp);
     event TokenOfferingEnded(uint256 timestamp);
 
@@ -55,7 +54,6 @@ contract TokenOffering is Pausable {
         }
         tokenAllocations[_to] = currentTokensAllocation + _amount;
         mint(_to, _amount);
-        emit TokensMinted(_to, _amount);
         // TODO run hooks after tokens have been allocated
     }
 
