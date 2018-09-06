@@ -9,11 +9,11 @@ contract TokenOffering is Pausable {
     mapping(address => uint256) tokenAllocations;
     uint256 public totalAllocatedTokens;
     uint256 public numberOfInvestors;
-    address tokenAddress;
-    uint256 startTimestamp;
-    uint256 endTimestamp;
+    address public tokenAddress;
+    uint256 public startTimestamp;
+    uint256 public endTimestamp;
     address[] modules;
-    TokenOfferingStatus status;
+    TokenOfferingStatus public status;
 
     event TokensMinted(address to, uint256 amount);
     event TokenOfferingStarted(uint256 timestamp);

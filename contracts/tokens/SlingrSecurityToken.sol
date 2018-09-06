@@ -8,9 +8,9 @@ import "../utils/Factory.sol";
 contract SlingrSecurityToken is StandardToken,Ownable {
     enum TokenStatus {Draft, Released}
 
-    string name;
-    string symbol;
-    uint8 decimals;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
     address tokenOfferingAddress;
     address[] modules;
     TokenStatus status;

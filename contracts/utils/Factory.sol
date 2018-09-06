@@ -15,4 +15,16 @@ contract Factory {
         instances.push(instance);
         emit InstanceCreated(instance);
     }
+
+    function getInstance(uint index)
+    public view returns(address)
+    {
+        return instances[index];
+    }
+
+    function getInstancesCount()
+    public view returns(uint)
+    {
+        return instances.length;
+    }
 }

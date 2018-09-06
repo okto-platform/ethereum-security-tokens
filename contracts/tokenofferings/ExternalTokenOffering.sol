@@ -11,13 +11,13 @@ contract ExternalTokenOffering is TokenOffering {
     }
 
     function allocateSoldTokens(address _to, uint256 _amount)
-    public onlyOwner
+    public onlyOwner inProgress
     {
         allocateTokens(_to, _amount);
     }
 
     function allocateManySoldTokens(address[] _to, uint256[] _amount)
-    public onlyOwner
+    public onlyOwner inProgress
     {
         require(_to.length == _amount.length, "Arrays size does not match");
         for (uint i = 0; i < _to.length; i++) {
