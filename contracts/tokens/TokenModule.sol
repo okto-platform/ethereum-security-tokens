@@ -5,5 +5,5 @@ contract TokenModule is Ownable {
     enum TransferAllowanceResult {NotAllowed, Allowed, ForceNotAllowed, ForceAllowed}
 
     function isTransferAllowed(address _from, address _to, uint256 _amount)
-    public returns(uint);
+    public returns(TransferAllowanceResult);
 }

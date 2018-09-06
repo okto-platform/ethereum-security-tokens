@@ -8,28 +8,28 @@ contract KycModule is TokenModule {
     address whitelistAddress;
 
     constructor(address _whitelistAddress)
+    public
     {
         whitelistAddress = _whitelistAddress;
     }
 
-    function isTransferAllowed
-    (
-        address _from,
-        address _to,
-        uint256 _amount
-    )
+    function isTransferAllowed(address, address _to, uint256)
     public
-    returns(uint) {
+    returns(TransferAllowanceResult) {
         Whitelist whitelist = Whitelist(whitelistAddress);
-        return whitelist.checkPropertyTrue(_to, "kyc");
+        if (whitelist.checkPropertyTrue(_to, "kyc")) {
+            return TransferAllowanceResult.Allowed;
+        } else {
+            return TransferAllowanceResult.NotAllowed;
+        }
     }
 }
 
 contract KycModuleFactory is Factory {
-    function createInstance(string _whitelistAddress)
+    function createInstance(address _whitelistAddress)
     public returns(address)
     {
-        KycModule instance = new KycWhitelistModule(_whitelistAddress);
+        KycModule instance = new KycModule(_whitelistAddress);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         return instance;

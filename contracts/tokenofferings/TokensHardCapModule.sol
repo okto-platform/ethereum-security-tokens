@@ -7,8 +7,7 @@ import "../utils/Factory.sol";
 contract TokensHardCapModule is TokenOfferingModule {
     uint256 hardCap;
 
-    constructor(address _tokenOfferingAddress, uint256 _hardCap) {
-        super(_tokenOfferingAddress);
+    constructor(address _tokenOfferingAddress, uint256 _hardCap) TokenOfferingModule(_tokenOfferingAddress) {
         hardCap = _hardCap;
     }
 
@@ -16,7 +15,7 @@ contract TokensHardCapModule is TokenOfferingModule {
     public returns(bool)
     {
         TokenOffering offering = TokenOffering(tokenOfferingAddress);
-        var currentAmountOfTokens = offering.getTotalAllocatedTokens();
+        uint256 currentAmountOfTokens = offering.totalAllocatedTokens();
         bool allowed = (currentAmountOfTokens + _amount) <= hardCap;
         if (!allowed) {
             emit AllocationRejected("hardCap", "Hard cap reached");
@@ -26,7 +25,7 @@ contract TokensHardCapModule is TokenOfferingModule {
 }
 
 contract TokensHardCapModuleFactory is Factory {
-    function createInstance(string _tokensOfferingAddress, uint256 _hardCap)
+    function createInstance(address _tokensOfferingAddress, uint256 _hardCap)
     public returns(address)
     {
         TokensHardCapModule instance = new TokensHardCapModule(_tokensOfferingAddress, _hardCap);

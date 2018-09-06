@@ -6,26 +6,28 @@ import "../utils/Factory.sol";
 contract StandardWhitelist is Whitelist {
     mapping (string => PropertyType) propertiesType;
 
-    constructor() {
+    constructor()
+    public
+    {
         propertiesType["kyc"] = PropertyType.Boolean;
         propertiesType["expiration"] = PropertyType.Number;
         propertiesType["country"] = PropertyType.String;
     }
 
-    function isValidValueForProperty(string _property, string _value)
+    function isValidValueForProperty(string _property, string)
     public returns(bool)
     {
         return checkPropertyType(_property, PropertyType.String);
     }
 
 
-    function isValidValueForProperty(string _property, bool _value)
+    function isValidValueForProperty(string _property, bool)
     public returns(bool)
     {
         return checkPropertyType(_property, PropertyType.Boolean);
     }
 
-    function isValidValueForProperty(string _property, uint _value)
+    function isValidValueForProperty(string _property, uint)
     public returns(bool)
     {
         return checkPropertyType(_property, PropertyType.Number);

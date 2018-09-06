@@ -12,7 +12,7 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     string symbol;
     uint8 decimals;
     address tokenOfferingAddress;
-    TokenModule[] modules;
+    address[] modules;
     TokenStatus status;
 
     event TokenReleased();

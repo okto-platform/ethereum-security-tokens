@@ -67,8 +67,8 @@ contract Whitelist is Ownable {
     {
         require(checkPropertyType(_property, PropertyType.String));
 
-        string propValue = stringProperties[_investor][_property];
-        if (keccak256(propValue) == keccak256(_value)) {
+        string memory propValue = stringProperties[_investor][_property];
+        if (keccak256(bytes(propValue)) == keccak256(bytes(_value))) {
             return true;
         } else {
             return false;
@@ -80,8 +80,8 @@ contract Whitelist is Ownable {
     {
         require(checkPropertyType(_property, PropertyType.String));
 
-        string propValue = stringProperties[_investor][_property];
-        if (keccak256(propValue) == keccak256(_value)) {
+        string memory propValue = stringProperties[_investor][_property];
+        if (keccak256(bytes(propValue)) == keccak256(bytes(_value))) {
             return false;
         } else {
             return true;
