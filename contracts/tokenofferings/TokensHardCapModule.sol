@@ -7,11 +7,14 @@ import "../utils/Factory.sol";
 contract TokensHardCapModule is TokenOfferingModule {
     uint256 hardCap;
 
-    constructor(address _tokenOfferingAddress, uint256 _hardCap) TokenOfferingModule(_tokenOfferingAddress) {
+    constructor(address _tokenOfferingAddress, uint256 _hardCap)
+    TokenOfferingModule(_tokenOfferingAddress)
+    public
+    {
         hardCap = _hardCap;
     }
 
-    function allowAllocation(address _to, uint256 _amount)
+    function allowAllocation(address, uint256 _amount)
     public returns(bool)
     {
         TokenOffering offering = TokenOffering(tokenOfferingAddress);

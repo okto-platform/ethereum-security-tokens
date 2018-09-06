@@ -34,7 +34,9 @@ contract TokenOffering is Pausable {
         _;
     }
 
-    constructor(address _tokenAddress) {
+    constructor(address _tokenAddress)
+    public
+    {
         require(_tokenAddress != address(0), "Token address must be provided");
         // TODO probably we should verify the address is the one for a token contract
         tokenAddress = _tokenAddress;
@@ -98,6 +100,18 @@ contract TokenOffering is Pausable {
     function removeModule(address _moduleAddress)
     public onlyOwner draft
     {
-        // TODO we should remove the element in the array
+        for (uint i = 0; i < modules.length-1; i++) {
+            if (modules[i] == _moduleAddress) {
+                break;
+            }
+        }
+        if (i >= modules.length) {
+            return;
+        }
+        for (; i < modules.length-1; i++){
+            modules[i] = modules[i+1];
+        }
+        delete modules[modules.length-1];
+        modules.length--;
     }
 }

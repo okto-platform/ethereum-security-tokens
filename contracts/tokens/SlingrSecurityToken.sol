@@ -16,9 +16,8 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     TokenStatus status;
 
     event TokenReleased();
-    event TokenOfferingAttached(address tokenOfferingAddress);
-    event ModuleAdded(address moduleAddress, string moduleName);
-    event ModuleRemoved(address moduleAddress, string moduleName);
+    event TokensMinted(address to, uint256 amount);
+    event TokensBurned(address from, uint256 amount);
 
     modifier onlyTokenOffering {
         require(msg.sender == tokenOfferingAddress);
@@ -35,7 +34,9 @@ contract SlingrSecurityToken is StandardToken,Ownable {
         _;
     }
 
-    constructor(string _name, string _symbol, uint8 _decimals) {
+    constructor(string _name, string _symbol, uint8 _decimals)
+    public
+    {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
@@ -92,21 +93,25 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     function mint(address _to, uint256 _amount)
     public onlyTokenOffering released
     {
-        // TODO only token offering contract can call this method
+        // TODO maybe we should have special hooks for minitng, but I think those should be in the offering
+        balances[_to] = balances[_to].add(_amount);
+        emit TokensMinted(_to, _amount);
     }
 
-    function burn(address _to, uint256 _amount)
+    function burn(address _from, uint256 _amount)
     public onlyTokenOffering released
     {
         // TODO only token offering contract can call this method
+        require(balances[_from] >= _amount, "Tokens to burn exceeded the balance of the wallet");
+        balances[_from] = balances[_from].sub(_amount);
+        emit TokensBurned(_from, _amount);
     }
 
     function setTokenOffering(address _tokenOfferingAddress)
     public onlyOwner draft
     {
-        tokenOfferingAddress = _tokenOfferingAddress;
         // TODO we should try to call a method to verify it is a token offering contract
-        emit TokenOfferingAttached(tokenOfferingAddress);
+        tokenOfferingAddress = _tokenOfferingAddress;
     }
 
     function addModule(address _moduleAddress)
@@ -119,7 +124,19 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     function removeModule(address _moduleAddress)
     public onlyOwner draft
     {
-        // TODO implement this method
+        for (uint i = 0; i < modules.length-1; i++) {
+            if (modules[i] == _moduleAddress) {
+                break;
+            }
+        }
+        if (i >= modules.length) {
+            return;
+        }
+        for (; i < modules.length-1; i++){
+            modules[i] = modules[i+1];
+        }
+        delete modules[modules.length-1];
+        modules.length--;
     }
 
     function release()

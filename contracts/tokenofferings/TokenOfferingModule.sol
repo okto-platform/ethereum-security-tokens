@@ -8,6 +8,7 @@ contract TokenOfferingModule is Ownable {
     event AllocationRejected(string code, string message);
 
     constructor(address _tokenOfferingAddress)
+    public
     {
         tokenOfferingAddress = _tokenOfferingAddress;
     }
