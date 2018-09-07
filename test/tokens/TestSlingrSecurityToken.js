@@ -58,7 +58,7 @@ contract('SlingrSecurityTokenFactory', async(accounts) => {
         balance = await token.balanceOf.call(accounts[2]);
         assert.equal(balance, 500000, 'Balance is not correct');
 
-        let totalTokensAllocated = await offering.totalAllocatedTokens.call();
+        let totalTokensAllocated = await offering.totalAllocatedTokens();
         assert.equal(totalTokensAllocated, 1500000, 'Total allocated tokens is not correct');
 
         result = await offering.allocateManySoldTokens([accounts[3], accounts[4]], [100000, 200000], {from: accounts[0]});

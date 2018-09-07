@@ -48,11 +48,13 @@ contract TokenOffering is Pausable {
         require(_to != address(0), "Address is not valid");
         require(_amount > 0, "Amount must be greater than zero");
         // TODO run validations here
+        // TODO we should use the safe math library here
         uint256 currentTokensAllocation = tokenAllocations[_to];
         if (currentTokensAllocation == 0) {
             numberOfInvestors++;
         }
         tokenAllocations[_to] = currentTokensAllocation + _amount;
+        totalAllocatedTokens += _amount;
         mint(_to, _amount);
         // TODO run hooks after tokens have been allocated
     }
@@ -69,6 +71,7 @@ contract TokenOffering is Pausable {
     {
         // TODO check balances before burning tokens
         SlingrSecurityToken token = SlingrSecurityToken(tokenAddress);
+        totalAllocatedTokens -= _amount;
         token.burn(_to, _amount);
     }
 
