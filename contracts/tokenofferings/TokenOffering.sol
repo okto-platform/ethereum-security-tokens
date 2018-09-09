@@ -18,6 +18,19 @@ contract TokenOffering is Pausable {
     event TokenOfferingStarted(uint256 timestamp);
     event TokenOfferingEnded(uint256 timestamp);
 
+
+    modifier onlyModule {
+        bool validSender = false;
+        for (uint i = 0; i < modules.length; i++) {
+            if (modules[i] == msg.sender) {
+                validSender = true;
+                break;
+            }
+        }
+        require(validSender, "Only a module can execute this operation");
+        _;
+    }
+
     modifier draft() {
         require(status == TokenOfferingStatus.Draft, "Token offering must be in draft to execute this operation");
         _;

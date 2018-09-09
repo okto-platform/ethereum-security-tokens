@@ -20,7 +20,21 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     event TokensBurned(address from, uint256 amount);
 
     modifier onlyTokenOffering {
-        require(msg.sender == tokenOfferingAddress);
+        require(msg.sender == tokenOfferingAddress, "Only token offering can execute this operation");
+        _;
+    }
+
+    modifier onlyModuleOrTokenOffering {
+        bool validSender = msg.sender == tokenOfferingAddress;
+        if (!validSender) {
+            for (uint i = 0; i < modules.length; i++) {
+                if (modules[i] == msg.sender) {
+                    validSender = true;
+                    break;
+                }
+            }
+        }
+        require(validSender, "Only token offering or token module can execute this operation");
         _;
     }
 
@@ -91,7 +105,7 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     }
 
     function mint(address _to, uint256 _amount)
-    public onlyTokenOffering released
+    public onlyModuleOrTokenOffering released
     {
         // TODO maybe we should have special hooks for minitng, but I think those should be in the offering
         balances[_to] = balances[_to].add(_amount);
@@ -99,7 +113,7 @@ contract SlingrSecurityToken is StandardToken,Ownable {
     }
 
     function burn(address _from, uint256 _amount)
-    public onlyTokenOffering released
+    public onlyModuleOrTokenOffering released
     {
         // TODO only token offering contract can call this method
         require(balances[_from] >= _amount, "Tokens to burn exceeded the balance of the wallet");

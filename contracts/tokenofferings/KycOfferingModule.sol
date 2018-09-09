@@ -5,7 +5,7 @@ import "./TokenOffering.sol";
 import "../utils/Factory.sol";
 import "../whitelists/Whitelist.sol";
 
-contract KycModule is TokenOfferingModule {
+contract KycOfferingModule is TokenOfferingModule {
     address whitelistAddress;
 
     constructor(address _tokenOfferingAddress, address _whitelistAddress)
@@ -28,11 +28,11 @@ contract KycModule is TokenOfferingModule {
     }
 }
 
-contract KycModuleFactory is Factory {
+contract KycOfferingModuleFactory is Factory {
     function createInstance(address _tokensAddress, address _whitelistAddress)
     public returns(address)
     {
-        KycModule instance = new KycModule(_tokensAddress, _whitelistAddress);
+        KycOfferingModule instance = new KycOfferingModule(_tokensAddress, _whitelistAddress);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         return instance;
