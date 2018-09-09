@@ -15,15 +15,17 @@ contract TokensHardCapModule is TokenOfferingModule {
     }
 
     function allowAllocation(address, uint256 _amount)
-    public returns(bool)
+    public returns(AllocationAllowanceResult)
     {
         TokenOffering offering = TokenOffering(tokenOfferingAddress);
         uint256 currentAmountOfTokens = offering.totalAllocatedTokens();
         bool allowed = (currentAmountOfTokens + _amount) <= hardCap;
         if (!allowed) {
             emit AllocationRejected("hardCap", "Hard cap reached");
+            return AllocationAllowanceResult.NotAllowed;
+        } else {
+            return AllocationAllowanceResult.Allowed;
         }
-        return allowed;
     }
 }
 
