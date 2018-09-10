@@ -4,7 +4,7 @@ Protocol for security token smart contracts for Transfer Agents Powered by SLING
 
 ## Overview
 
-![High level overview](https://github.comhttps://github.com/slingr-stack/slingr-security-tokens/blob/master/docs/slingr-tokens.png?raw=true)
+![High level overview](https://github.com/slingr-stack/slingr-security-tokens/blob/master/docs/slingr-tokens.png?raw=true)
 
 The `Token` is a ERC-20 compatible contract that holds balances and have the methods to transfer tokens from
 on wallet to another. Additionally the SLINGR Security Token has some additional features:
