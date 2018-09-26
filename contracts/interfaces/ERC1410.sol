@@ -4,7 +4,7 @@ import "./ERC777.sol";
 
 interface ERC1410 is ERC777 {
     function getDefaultTranches(address _tokenHolder) external view returns (bytes32[]);
-    function setDefaultTranche(bytes32[] _tranches) external;
+    function setDefaultTranches(bytes32[] _tranches) external;
     function balanceOfByTranche(bytes32 _tranche, address _tokenHolder) external view returns (uint256);
     function sendByTranche(bytes32 _tranche, address _to, uint256 _amount, bytes _data) external returns (bytes32);
     function sendByTranches(bytes32[] _tranches, address[] _tos, uint256[] _amounts, bytes _data) external returns (bytes32[]);
