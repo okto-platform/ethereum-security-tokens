@@ -10,6 +10,12 @@ contract ModularSecurityToken is ERC1400,Ownable {
 
     enum TokenStatus {Draft, Released}
 
+    struct Document {
+        bytes32 name;
+        string uri;
+        bytes32 hash;
+    }
+
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -21,7 +27,10 @@ contract ModularSecurityToken is ERC1400,Ownable {
     mapping (address => mapping (address => uint256)) internal allowed;
     address[] public defaultOperators;
     mapping(address => mapping(address => bool)) operators;
+    mapping(bytes32 => Document) documents;
+    bool public issuable;
     TokenStatus public status;
+
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -320,8 +329,9 @@ contract ModularSecurityToken is ERC1400,Ownable {
     function sendByTranche(bytes32 _tranche, address _to, uint256 _amount, bytes _data)
     external returns (bytes32)
     {
-        require(_value <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
+        require(_amount <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
         require(_to != address(0), "Cannot transfer to address 0x0");
+        require(_amount >= 0, "Amount cannot be negative");
 
         // TODO call tokensToSend if needed
         // TODO call tokensReceived if needed
@@ -340,9 +350,43 @@ contract ModularSecurityToken is ERC1400,Ownable {
         return destinationTranche;
     }
 
-    function sendByTranches(bytes32[] _tranches, address[] _tos, uint256[] _amounts, bytes _data) external returns (bytes32[]);
-    function operatorSendByTranche(bytes32 _tranche, address _from, address _to, uint256 _amount, bytes _data, bytes _operatorData) external returns (bytes32);
-    function operatorSendByTranches(bytes32[] _tranches, address[] _froms, address[] _tos, uint256[] _amounts, bytes _data, bytes _operatorData) external returns (bytes32[]);
+    function sendByTranches(bytes32[] _tranches, address[] _tos, uint256[] _amounts, bytes _data)
+    external returns (bytes32[])
+    {
+        revert("Feature not supported");
+    }
+
+    function operatorSendByTranche(bytes32 _tranche, address _from, address _to, uint256 _amount, bytes _data, bytes _operatorData)
+    external returns (bytes32)
+    {
+        require(isOperatorFor(msg.sender, _from), "Invalid operator");
+        require(_amount <= balancesPerTranche[_from][_tranche], "Insufficient funds in tranche");
+        require(_tokenHolder != address(0), "Cannot transfer from address 0x0");
+        require(_to != address(0), "Cannot transfer to address 0x0");
+        require(_amount >= 0, "Amount cannot be negative");
+
+        // TODO call tokensToSend if needed
+        // TODO call tokensReceived if needed
+        // TODO call canSend
+
+        bytes32 destinationTranche = getDestinationTranche(_tranche, _to, _amount, _data);
+        balancesPerTranche[_from][_tranche] = balancesPerTranche[_from][_tranche].sub(_amount);
+        balancesPerTranche[to][destinationTranche] = balancesPerTranche[to][destinationTranche].add(_amount);
+        // TODO make sure that tranche is added to destination
+        // TODO remove tranche if the balance is zero for the source
+        // update global balances
+        balances[_from] = balances[_from].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        // trigger events
+        SentByTranche(_tranche, destinationTranche, msg.sender, _from, _to, _amount, _data, _operatorData);
+        return destinationTranche;
+    }
+
+    function operatorSendByTranches(bytes32[] _tranches, address[] _froms, address[] _tos, uint256[] _amounts, bytes _data, bytes _operatorData)
+    external returns (bytes32[])
+    {
+        revert("Feature not supported");
+    }
 
     function tranchesOf(address _tokenHolder)
     external view returns (bytes32[])
@@ -374,22 +418,42 @@ contract ModularSecurityToken is ERC1400,Ownable {
         revert("Feature not supported");
     }
 
-    function redeemByTranche(bytes32 _tranche, uint256 _amount, bytes _data) external;
-    function operatorRedeemByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _operatorData) external;
+    function redeemByTranche(bytes32 _tranche, uint256 _amount, bytes _data)
+    external
+    {
+        require(_amount <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
 
-    event SentByTranche(
-        bytes32 indexed fromTranche,
-        bytes32 toTranche,
-        address indexed operator,
-        address indexed from,
-        address indexed to,
-        uint256 amount,
-        bytes data,
-        bytes operatorData
-    );
-    event AuthorizedOperatorByTranche(bytes32 indexed tranche, address indexed operator, address indexed tokenHolder);
-    event RevokedOperatorByTranche(bytes32 indexed tranche, address indexed operator, address indexed tokenHolder);
-    event BurnedByTranche(bytes32 indexed tranche, address indexed operator, address indexed from, uint256 amount, bytes operatorData);
+        // TODO call tokensToSend if needed
+
+        balancesPerTranche[msg.sender][_tranche] = balancesPerTranche[msg.sender][_tranche].sub(_amount);
+        // TODO make sure that tranche is added to destination
+        // TODO remove tranche if the balance is zero for the source
+        // update global balances
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        // reduce total supply of tokens
+        totalSupply = totalSupply.sub(_amount);
+        // trigger events
+        BurnedByTranche(_tranche, address(0), msg.sender, _amount, _data, new bytes[](0));
+    }
+
+    function operatorRedeemByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data, bytes _operatorData)
+    external
+    {
+        require(_amount <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
+        require(isOperatorFor(msg.sender, _tokenHolder), "Invalid operator");
+        require(_tokenHolder != address(0), "Cannot burn tokens from address 0x0");
+
+        // TODO call tokensToSend if needed
+
+        balancesPerTranche[_tokenHolder][_tranche] = balancesPerTranche[_tokenHolder][_tranche].sub(_amount);
+        // TODO remove tranche if the balance is zero for the source
+        // update global balances
+        balances[_tokenHolder] = balances[_tokenHolder].sub(_amount);
+        // reduce total supply of tokens
+        totalSupply = totalSupply.sub(_amount);
+        // trigger events
+        BurnedByTranche(_tranche, msg.sender, _tokenHolder, _amount, _data, _operatorData);
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -397,13 +461,47 @@ contract ModularSecurityToken is ERC1400,Ownable {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    function getDocument(bytes32 _name) external view returns (string, bytes32);
-    function setDocument(bytes32 _name, string _uri, bytes32 _documentHash) external;
-    function issuable() external view returns (bool);
-    function canSend(address _from, address _to, bytes32 _tranche, uint256 _amount, bytes _data) external view returns (byte, bytes32, bytes32);
-    function issueByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data) external;
+    function getDocument(bytes32 _name)
+    external view returns (string, bytes32)
+    {
+        Document doc = documents[_name];
 
-    event IssuedByTranche(bytes32 indexed tranche, address indexed operator, address indexed to, uint256 amount, bytes data, bytes operatorData);
+        require(doc.name == _name, "Document not found");
+
+        return (doc.uri, doc.hash);
+    }
+
+    function setDocument(bytes32 _name, string _uri, bytes32 _documentHash)
+    external
+    {
+        Document doc = documents[_name];
+
+        require(doc.name != _name, "Document already exists");
+
+        doc.name = _name;
+        doc.uri = _uri;
+        doc.hash = _documentHash;
+    }
+
+    function canSend(address _from, address _to, bytes32 _tranche, uint256 _amount, bytes _data)
+    external view returns (byte, bytes32, bytes32)
+    {
+        // TODO we need to go through all the transfer modules and check if we can send
+    }
+
+    function issueByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data)
+    external
+    {
+        require(_tokenHolder != address(0), "Cannot issue tokens to address 0x0");
+        // TODO we should only allow offering modules to do this
+        require(isDefaultOperator(msg.sender), "Only default operators can do this");
+
+        balancesPerTranche[_tokenHolder][_tranche] = balancesPerTranche[_tokenHolder][_tranche].add(_amount);
+        balances[_tokenHolder] = balances[_tokenHolder].add(_amount);
+        totalSupply = totalSupply.add(_amount);
+
+        IssuedByTranche(_tranche, _tokenHolder, _amount, _data);
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -419,6 +517,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
         decimals = _decimals;
         granularity = _granularity;
         defaultOperators = _defaultOperators;
+        issuable = true;
     }
 }
 
