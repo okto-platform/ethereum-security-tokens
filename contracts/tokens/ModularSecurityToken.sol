@@ -31,7 +31,6 @@ contract ModularSecurityToken is ERC1400,Ownable {
     bool public issuable;
     TokenStatus public status;
 
-
     ///////////////////////////////////////////////////////////////////////////
     //
     // ERC-20 Standard Token
@@ -93,7 +92,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
 
         // go through default tranches to
         // TODO see if we can refactor this so we don't copy that much code
-        bytes32 defaultTranches = getDefaultTranches(_from);
+        bytes32[] memory defaultTranches = internalGetDefaultTranches(_from);
         uint256 pendingAmount = _value;
         for (uint i = 0; i < defaultTranches.length; i++) {
             if (balancesPerTranche[_from][defaultTranches[i]] > 0) {
@@ -103,12 +102,12 @@ contract ModularSecurityToken is ERC1400,Ownable {
                     amountToSubtract = trancheBalance;
                     pendingAmount = pendingAmount.sub(amountToSubtract);
                 }
-                bytes32 destinationTranche = getDestinationTranche(_tranche, _to, _amount, _data);
-                balancesPerTranche[_from][_tranche] = balancesPerTranche[_from][_tranche].sub(amountToSubtract);
+                bytes32 destinationTranche = internalGetDestinationTranche(defaultTranches[i], _to, amountToSubtract, new bytes[](0));
+                balancesPerTranche[_from][defaultTranches[i]] = balancesPerTranche[_from][defaultTranches[i]].sub(amountToSubtract);
                 balancesPerTranche[_to][destinationTranche] = balancesPerTranche[_to][destinationTranche].add(amountToSubtract);
                 // TODO make sure that tranche is added to destination
                 // TODO remove tranche if the balance is zero for the source
-                SentByTranche(defaultTranches[i], destinationTranche, address(0), _from, _to, amountToSubtract, new bytes[](0), new bytes[](0));
+                emit SentByTranche(defaultTranches[i], destinationTranche, address(0), _from, _to, amountToSubtract, new bytes[](0), new bytes[](0));
             }
         }
 
@@ -210,7 +209,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
         // TODO check granularity
 
         // go through default tranches to
-        bytes32 defaultTranches = getDefaultTranches(from);
+        bytes32[] memory defaultTranches = internalGetDefaultTranches(from);
         uint256 pendingAmount = amount;
         for (uint i = 0; i < defaultTranches.length; i++) {
             if (balancesPerTranche[from][defaultTranches[i]] > 0) {
@@ -220,11 +219,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
                     amountToSubtract = trancheBalance;
                     pendingAmount = pendingAmount.sub(amountToSubtract);
                 }
-                if (operator != address(0)) {
-                    operatorSendByTranche(defaultTranches[i], from, to, amountToSubtract, data, operatorData);
-                } else {
-                    sendByTranche(defaultTranches[i], to, amountToSubtract, data);
-                }
+                internalSendByTranche(defaultTranches[i], operator, from, to, amountToSubtract, data, operatorData);
             }
         }
 
@@ -241,7 +236,6 @@ contract ModularSecurityToken is ERC1400,Ownable {
     {
         // TODO call `tokensToSend`
         require(amount <= balances[msg.sender], "Insufficient funds");
-        require(to != address(0), "Cannot transfer to address 0x0");
 
         internalBurn(address(0), msg.sender, amount, data, new bytes[](0));
     }
@@ -251,7 +245,6 @@ contract ModularSecurityToken is ERC1400,Ownable {
     {
         require(isOperatorFor(msg.sender, from), "Invalid operator");
         require(amount <= balances[msg.sender], "Insufficient funds");
-        require(to != address(0), "Cannot transfer to address 0x0");
         require(from != address(0), "Cannot transfer from address 0x0");
 
         internalBurn(msg.sender, from, amount, data, operatorData);
@@ -264,7 +257,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
         // TODO check granularity
 
         // go through default tranches to
-        bytes32 defaultTranches = getDefaultTranches(from);
+        bytes32 defaultTranches = internalGetDefaultTranches(from);
         uint256 pendingAmount = amount;
         for (uint i = 0; i < defaultTranches.length; i++) {
             if (balancesPerTranche[from][defaultTranches[i]] > 0) {
@@ -274,11 +267,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
                     amountToSubtract = trancheBalance;
                     pendingAmount = pendingAmount.sub(amountToSubtract);
                 }
-                if (operator != address(0)) {
-                    operatorRedeemByTranche(defaultTranches[i], from, amountToSubtract, data, operatorData);
-                } else {
-                    redeemByTranche(defaultTranches[i], from, amountToSubtract, data);
-                }
+                internalRedeemByTranche(defaultTranches[i], operator, from, amountToSubtract, data, operatorData);
             }
         }
 
@@ -299,10 +288,16 @@ contract ModularSecurityToken is ERC1400,Ownable {
     function getDefaultTranches(address _tokenHolder)
     external view returns (bytes32[])
     {
+        return internalGetDefaultTranches(_tokenHolder);
+    }
+
+    function internalGetDefaultTranches(address _tokenHolder)
+    internal view returns (bytes32[])
+    {
         // the default implementation returns the tranches available for the token
         // holder in the order they have been added
         // TODO we should allow to override this behavior through modules
-        return tranchesOf(_tokenHolder);
+        return internalTranchesOf(_tokenHolder);
     }
 
     function setDefaultTranches(bytes32[] _tranches)
@@ -312,8 +307,14 @@ contract ModularSecurityToken is ERC1400,Ownable {
         revert("Feature not supported");
     }
 
-    function getDestinationTranche(bytes32 sourceTranche, address, uint256, bytes)
-    public view external returns(bytes32)
+    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes data)
+    view external returns(bytes32)
+    {
+        return internalGetDestinationTranche(sourceTranche, from, amount, data);
+    }
+
+    function internalGetDestinationTranche(bytes32 sourceTranche, address, uint256, bytes)
+    view internal returns(bytes32)
     {
         // the default implementation is to transfer to the same tranche
         // TODO we should allow to override this behavior through modules
@@ -333,21 +334,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
         require(_to != address(0), "Cannot transfer to address 0x0");
         require(_amount >= 0, "Amount cannot be negative");
 
-        // TODO call tokensToSend if needed
-        // TODO call tokensReceived if needed
-        // TODO call canSend
-
-        bytes32 destinationTranche = getDestinationTranche(_tranche, _to, _amount, _data);
-        balancesPerTranche[msg.sender][_tranche] = balancesPerTranche[msg.sender][_tranche].sub(_amount);
-        balancesPerTranche[to][destinationTranche] = balancesPerTranche[to][destinationTranche].add(_amount);
-        // TODO make sure that tranche is added to destination
-        // TODO remove tranche if the balance is zero for the source
-        // update global balances
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        // trigger events
-        SentByTranche(_tranche, destinationTranche, address(0), msg.sender, _to, _amount, _data, new bytes[](0));
-        return destinationTranche;
+        return internalSendByTranche(_tranche, address(0), msg.sender, _to, _amount, _data, new bytes[0]());
     }
 
     function sendByTranches(bytes32[] _tranches, address[] _tos, uint256[] _amounts, bytes _data)
@@ -361,24 +348,30 @@ contract ModularSecurityToken is ERC1400,Ownable {
     {
         require(isOperatorFor(msg.sender, _from), "Invalid operator");
         require(_amount <= balancesPerTranche[_from][_tranche], "Insufficient funds in tranche");
-        require(_tokenHolder != address(0), "Cannot transfer from address 0x0");
+        require(_from != address(0), "Cannot transfer from address 0x0");
         require(_to != address(0), "Cannot transfer to address 0x0");
         require(_amount >= 0, "Amount cannot be negative");
 
-        // TODO call tokensToSend if needed
+        return internalSendByTranche(_tranche, msg.sender, _from, _to, _amount, _data, _operatorData);
+    }
+
+    function internalSendByTranche(bytes32 _tranche, address _operator, address _from, address _to, uint256 _amount, bytes _data, bytes _operatorData)
+    internal returns (bytes32)
+    {
+        // TODO call tokensToSend if n  eeded
         // TODO call tokensReceived if needed
         // TODO call canSend
 
-        bytes32 destinationTranche = getDestinationTranche(_tranche, _to, _amount, _data);
+        bytes32 destinationTranche = internalGetDestinationTranche(_tranche, _to, _amount, _data);
         balancesPerTranche[_from][_tranche] = balancesPerTranche[_from][_tranche].sub(_amount);
-        balancesPerTranche[to][destinationTranche] = balancesPerTranche[to][destinationTranche].add(_amount);
+        balancesPerTranche[_to][destinationTranche] = balancesPerTranche[_to][destinationTranche].add(_amount);
         // TODO make sure that tranche is added to destination
         // TODO remove tranche if the balance is zero for the source
         // update global balances
         balances[_from] = balances[_from].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         // trigger events
-        SentByTranche(_tranche, destinationTranche, msg.sender, _from, _to, _amount, _data, _operatorData);
+        SentByTranche(_tranche, destinationTranche, _operator, _from, _to, _amount, _data, _operatorData);
         return destinationTranche;
     }
 
@@ -390,6 +383,12 @@ contract ModularSecurityToken is ERC1400,Ownable {
 
     function tranchesOf(address _tokenHolder)
     external view returns (bytes32[])
+    {
+        return internalTranchesOf(_tokenHolder);
+    }
+
+    function internalTranchesOf(address _tokenHolder)
+    internal view returns (bytes32[])
     {
         return tranches[_tokenHolder];
     }
@@ -423,17 +422,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     {
         require(_amount <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
 
-        // TODO call tokensToSend if needed
-
-        balancesPerTranche[msg.sender][_tranche] = balancesPerTranche[msg.sender][_tranche].sub(_amount);
-        // TODO make sure that tranche is added to destination
-        // TODO remove tranche if the balance is zero for the source
-        // update global balances
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        // reduce total supply of tokens
-        totalSupply = totalSupply.sub(_amount);
-        // trigger events
-        BurnedByTranche(_tranche, address(0), msg.sender, _amount, _data, new bytes[](0));
+        internalRedeemByTranche(_tranche, address(0), msg.sender, _amount, _data, new bytes[](0));
     }
 
     function operatorRedeemByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data, bytes _operatorData)
@@ -443,8 +432,13 @@ contract ModularSecurityToken is ERC1400,Ownable {
         require(isOperatorFor(msg.sender, _tokenHolder), "Invalid operator");
         require(_tokenHolder != address(0), "Cannot burn tokens from address 0x0");
 
-        // TODO call tokensToSend if needed
+        internalRedeemByTranche(_tranche, msg.sender, _tokenHolder, _amount, _data, _operatorData);
+    }
 
+    function internalRedeemByTranche(bytes32 _tranche, address _operator, address _tokenHolder, uint256 _amount, bytes _data, bytes _operatorData)
+    internal
+    {
+        // TODO call tokensToSend if needed
         balancesPerTranche[_tokenHolder][_tranche] = balancesPerTranche[_tokenHolder][_tranche].sub(_amount);
         // TODO remove tranche if the balance is zero for the source
         // update global balances
@@ -452,7 +446,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
         // reduce total supply of tokens
         totalSupply = totalSupply.sub(_amount);
         // trigger events
-        BurnedByTranche(_tranche, msg.sender, _tokenHolder, _amount, _data, _operatorData);
+        BurnedByTranche(_tranche, _operator, _tokenHolder, _amount, _data, _operatorData);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -464,7 +458,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     function getDocument(bytes32 _name)
     external view returns (string, bytes32)
     {
-        Document doc = documents[_name];
+        Document storage doc = documents[_name];
 
         require(doc.name == _name, "Document not found");
 
@@ -474,7 +468,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     function setDocument(bytes32 _name, string _uri, bytes32 _documentHash)
     external
     {
-        Document doc = documents[_name];
+        Document storage doc = documents[_name];
 
         require(doc.name != _name, "Document already exists");
 
@@ -486,7 +480,9 @@ contract ModularSecurityToken is ERC1400,Ownable {
     function canSend(address _from, address _to, bytes32 _tranche, uint256 _amount, bytes _data)
     external view returns (byte, bytes32, bytes32)
     {
+        bytes32 destinationTranche = internalGetDestinationTranche(_tranche, _to, _amount, _data);
         // TODO we need to go through all the transfer modules and check if we can send
+        return (0xA0, bytes32(0x0), destinationTranche);
     }
 
     function issueByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data)

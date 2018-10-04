@@ -3,22 +3,20 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 interface ERC777 is ERC20 {
-    function name() public view returns (string);
-    function symbol() public view returns (string);
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address owner) public view returns (uint256);
-    function granularity() public view returns (uint256);
+    function name() external view returns (string);
+    function symbol() external view returns (string);
+    function granularity() external view returns (uint256);
 
-    function defaultOperators() public view returns (address[]);
-    function authorizeOperator(address operator) public;
-    function revokeOperator(address operator) public;
-    function isOperatorFor(address operator, address tokenHolder) public view returns (bool);
+    function defaultOperators() external view returns (address[]);
+    function authorizeOperator(address operator) external;
+    function revokeOperator(address operator) external;
+    function isOperatorFor(address operator, address tokenHolder) external view returns (bool);
 
-    function send(address to, uint256 amount, bytes data) public;
-    function operatorSend(address from, address to, uint256 amount, bytes data, bytes operatorData) public;
+    function send(address to, uint256 amount, bytes data) external;
+    function operatorSend(address from, address to, uint256 amount, bytes data, bytes operatorData) external;
 
-    function burn(uint256 amount, bytes data) public;
-    function operatorBurn(address from, uint256 amount, bytes data, bytes operatorData) public;
+    function burn(uint256 amount, bytes data) external;
+    function operatorBurn(address from, uint256 amount, bytes data, bytes operatorData) external;
 
     event Sent(
         address indexed operator,
