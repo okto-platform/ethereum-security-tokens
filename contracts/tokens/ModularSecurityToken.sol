@@ -61,7 +61,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     {
         require(_value <= balances[msg.sender], "Insufficient funds");
         require(_to != address(0), "Cannot transfer to address 0x0");
-        send(_to, _value, new bytes[](0));
+        send(_to, _value, new bytes(0));
         return true;
     }
 
@@ -102,12 +102,12 @@ contract ModularSecurityToken is ERC1400,Ownable {
                     amountToSubtract = trancheBalance;
                     pendingAmount = pendingAmount.sub(amountToSubtract);
                 }
-                bytes32 destinationTranche = internalGetDestinationTranche(defaultTranches[i], _to, amountToSubtract, new bytes[](0));
+                bytes32 destinationTranche = internalGetDestinationTranche(defaultTranches[i], _to, amountToSubtract, new bytes(0));
                 balancesPerTranche[_from][defaultTranches[i]] = balancesPerTranche[_from][defaultTranches[i]].sub(amountToSubtract);
                 balancesPerTranche[_to][destinationTranche] = balancesPerTranche[_to][destinationTranche].add(amountToSubtract);
                 // TODO make sure that tranche is added to destination
                 // TODO remove tranche if the balance is zero for the source
-                emit SentByTranche(defaultTranches[i], destinationTranche, address(0), _from, _to, amountToSubtract, new bytes[](0), new bytes[](0));
+                emit SentByTranche(defaultTranches[i], destinationTranche, address(0), _from, _to, amountToSubtract, new bytes(0), new bytes(0));
             }
         }
 
@@ -167,7 +167,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
         if (isDefaultOperator(operator)) {
             return true;
         }
-        return defaultOperators[tokenHolder][operator];
+        return operators[tokenHolder][operator];
     }
 
     function isDefaultOperator(address operator)
