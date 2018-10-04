@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
-interface ERC777 is ERC20 {
+contract ERC777 is ERC20 {
     function name() external view returns (string);
     function symbol() external view returns (string);
     function granularity() external view returns (uint256);
@@ -27,7 +27,7 @@ interface ERC777 is ERC20 {
         bytes operatorData
     );
     event Minted(address indexed operator, address indexed to, uint256 amount, bytes data, bytes operatorData);
-    event Burned(address indexed operator, address indexed from, uint256 amount, bytes operatorData);
+    event Burned(address indexed operator, address indexed from, uint256 amount, bytes data, bytes operatorData);
     event AuthorizedOperator(address indexed operator, address indexed tokenHolder);
     event RevokedOperator(address indexed operator, address indexed tokenHolder);
 }

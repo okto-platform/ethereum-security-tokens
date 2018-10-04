@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "./ERC777.sol";
 
-interface ERC1410 is ERC777 {
+contract ERC1410 is ERC777 {
     function getDefaultTranches(address _tokenHolder) external view returns (bytes32[]);
     function setDefaultTranches(bytes32[] _tranches) external;
     function balanceOfByTranche(bytes32 _tranche, address _tokenHolder) external view returns (uint256);
@@ -16,10 +16,10 @@ interface ERC1410 is ERC777 {
     function revokeOperatorByTranche(bytes32 _tranche, address _operator) external;
     function isOperatorForTranche(bytes32 _tranche, address _operator, address _tokenHolder) external view returns (bool);
     function redeemByTranche(bytes32 _tranche, uint256 _amount, bytes _data) external;
-    function operatorRedeemByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _operatorData) external;
+    function operatorRedeemByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data, bytes _operatorData) external;
 
     event SentByTranche(
-        bytes32 indexed fromTranche,
+        bytes32 fromTranche,
         bytes32 toTranche,
         address indexed operator,
         address indexed from,
@@ -30,5 +30,5 @@ interface ERC1410 is ERC777 {
     );
     event AuthorizedOperatorByTranche(bytes32 indexed tranche, address indexed operator, address indexed tokenHolder);
     event RevokedOperatorByTranche(bytes32 indexed tranche, address indexed operator, address indexed tokenHolder);
-    event BurnedByTranche(bytes32 indexed tranche, address indexed operator, address indexed from, uint256 amount, bytes operatorData);
+    event BurnedByTranche(bytes32 tranche, address indexed operator, address indexed from, uint256 amount, bytes data, bytes operatorData);
 }
