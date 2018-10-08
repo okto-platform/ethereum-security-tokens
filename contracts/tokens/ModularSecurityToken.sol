@@ -10,12 +10,6 @@ contract ModularSecurityToken is ERC1400,Ownable {
 
     enum TokenStatus {Draft, Released}
 
-    struct Document {
-        bytes32 name;
-        string uri;
-        bytes32 hash;
-    }
-
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -27,9 +21,22 @@ contract ModularSecurityToken is ERC1400,Ownable {
     mapping (address => mapping (address => uint256)) internal allowed;
     address[] public defaultOperators;
     mapping(address => mapping(address => bool)) operators;
-    mapping(bytes32 => Document) documents;
-    bool public issuable;
+    bool public issuable = true;
     TokenStatus public status;
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    // Modifiers
+    //
+    ///////////////////////////////////////////////////////////////////////////
+
+    modifier isReleased()
+    {
+        require(status == TokenStatus.Released, "Token must be released");
+        _;
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -62,6 +69,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
      * @param _value uint256 the amount of tokens to be transferred
      */
     function transfer(address _to, uint256 _value)
+    isReleased
     public returns (bool)
     {
         require(_value <= balances[msg.sender], "Insufficient funds");
@@ -77,6 +85,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
      * @return A uint256 specifying the amount of tokens still available for the spender.
      */
     function allowance(address _owner, address _spender)
+    isReleased
     public view returns (uint256)
     {
         return allowed[_owner][_spender];
@@ -89,6 +98,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
      * @param _value uint256 the amount of tokens to be transferred
      */
     function transferFrom(address _from, address _to, uint256 _value)
+    isReleased
     public returns (bool)
     {
         require(_value <= balances[_from]);
@@ -132,7 +142,10 @@ contract ModularSecurityToken is ERC1400,Ownable {
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    function approve(address _spender, uint256 _value)
+    isReleased
+    public returns (bool)
+    {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
@@ -223,6 +236,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function send(address to, uint256 amount, bytes data)
+    isReleased
     external
     {
         require(amount <= balances[msg.sender], "Insufficient funds");
@@ -232,6 +246,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function operatorSend(address from, address to, uint256 amount, bytes data, bytes operatorData)
+    isReleased
     external
     {
         require(internalIsOperatorFor(msg.sender, from), "Invalid operator");
@@ -273,6 +288,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function burn(uint256 amount, bytes data)
+    isReleased
     external
     {
         // TODO call `tokensToSend`
@@ -282,6 +298,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function operatorBurn(address from, uint256 amount, bytes data, bytes operatorData)
+    isReleased
     external
     {
         require(internalIsOperatorFor(msg.sender, from), "Invalid operator");
@@ -369,6 +386,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function sendByTranche(bytes32 _tranche, address _to, uint256 _amount, bytes _data)
+    isReleased
     external returns (bytes32)
     {
         require(_amount <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
@@ -379,12 +397,14 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function sendByTranches(bytes32[], address[], uint256[], bytes)
+    isReleased
     external returns (bytes32[])
     {
         revert("Feature not supported");
     }
 
     function operatorSendByTranche(bytes32 _tranche, address _from, address _to, uint256 _amount, bytes _data, bytes _operatorData)
+    isReleased
     external returns (bytes32)
     {
         require(internalIsOperatorFor(msg.sender, _from), "Invalid operator");
@@ -417,6 +437,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function operatorSendByTranches(bytes32[], address[], address[], uint256[], bytes, bytes)
+    isReleased
     external returns (bytes32[])
     {
         revert("Feature not supported");
@@ -434,31 +455,8 @@ contract ModularSecurityToken is ERC1400,Ownable {
         return tranches[_tokenHolder];
     }
 
-    function defaultOperatorsByTranche(bytes32)
-    external view returns (address[])
-    {
-        revert("Feature not supported");
-    }
-
-    function authorizeOperatorByTranche(bytes32, address)
-    external
-    {
-        revert("Feature not supported");
-    }
-
-    function revokeOperatorByTranche(bytes32, address)
-    external
-    {
-        revert("Feature not supported");
-    }
-
-    function isOperatorForTranche(bytes32, address, address)
-    external view returns (bool)
-    {
-        revert("Feature not supported");
-    }
-
     function redeemByTranche(bytes32 _tranche, uint256 _amount, bytes _data)
+    isReleased
     external
     {
         require(_amount <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
@@ -467,6 +465,7 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function operatorRedeemByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data, bytes _operatorData)
+    isReleased
     external
     {
         require(_amount <= balancesPerTranche[msg.sender][_tranche], "Insufficient funds in tranche");
@@ -496,28 +495,6 @@ contract ModularSecurityToken is ERC1400,Ownable {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    function getDocument(bytes32 _name)
-    external view returns (string, bytes32)
-    {
-        Document storage doc = documents[_name];
-
-        require(doc.name == _name, "Document not found");
-
-        return (doc.uri, doc.hash);
-    }
-
-    function setDocument(bytes32 _name, string _uri, bytes32 _documentHash)
-    external
-    {
-        Document storage doc = documents[_name];
-
-        require(doc.name != _name, "Document already exists");
-
-        doc.name = _name;
-        doc.uri = _uri;
-        doc.hash = _documentHash;
-    }
-
     function canSend(address, address _to, bytes32 _tranche, uint256 _amount, bytes _data)
     external view returns (byte, bytes32, bytes32)
     {
@@ -533,10 +510,12 @@ contract ModularSecurityToken is ERC1400,Ownable {
     }
 
     function issueByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data)
+    isReleased
     external
     {
         require(_tokenHolder != address(0), "Cannot issue tokens to address 0x0");
         // TODO we should only allow offering modules to do this
+        require(issuable, "It is not possible to issue more tokens");
         require(internalIsDefaultOperator(msg.sender), "Only default operators can do this");
 
         balancesPerTranche[_tokenHolder][_tranche] = balancesPerTranche[_tokenHolder][_tranche].add(_amount);
@@ -561,6 +540,15 @@ contract ModularSecurityToken is ERC1400,Ownable {
         granularity = _granularity;
         defaultOperators = _defaultOperators;
         issuable = true;
+    }
+
+    function release()
+    external
+    {
+        require(status == TokenStatus.Draft, "Token is not in draft status");
+        require(internalIsDefaultOperator(msg.sender), "Only default operators can do this");
+
+        status = TokenStatus.Released;
     }
 }
 
