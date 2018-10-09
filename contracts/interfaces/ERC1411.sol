@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "./ERC1410.sol";
 
-contract ERC1400 is ERC1410 {
+contract ERC1411 is ERC1410 {
     //function getDocument(bytes32 _name) external view returns (string, bytes32);
     //function setDocument(bytes32 _name, string _uri, bytes32 _documentHash) external;
     function issuable() external view returns (bool);

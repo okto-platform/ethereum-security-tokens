@@ -44,9 +44,5 @@ contract('ModularSecurityTokenFactory', async(accounts) => {
 
         let symbol = await token.symbol.call();
         assert.equal(symbol, 'TOKB', 'Token symbol not set');
-
-
     });
-
-
 });
