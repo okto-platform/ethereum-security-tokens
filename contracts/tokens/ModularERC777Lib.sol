@@ -8,24 +8,6 @@ library ModularERC777Lib {
     using SafeMath for uint256;
     using ModularERC1410Lib for ModularTokenLib.TokenStorage;
 
-    function _name(ModularTokenLib.TokenStorage storage self)
-    public view returns(string)
-    {
-        return self.name;
-    }
-
-    function _symbol(ModularTokenLib.TokenStorage storage self)
-    public view returns(string)
-    {
-        return self.symbol;
-    }
-
-    function _decimals(ModularTokenLib.TokenStorage storage self)
-    public view returns(uint8)
-    {
-        return self.decimals;
-    }
-
     function _granularity(ModularTokenLib.TokenStorage storage self)
     public view returns(uint256)
     {

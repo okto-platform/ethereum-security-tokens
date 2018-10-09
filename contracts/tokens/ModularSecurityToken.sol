@@ -17,6 +17,12 @@ contract ModularSecurityToken is ERC1411,Ownable {
     using ModularERC1410Lib for ModularTokenLib.TokenStorage;
     using ModularERC1411Lib for ModularTokenLib.TokenStorage;
 
+    enum TokenStatus {Draft, Released}
+
+    string _name;
+    string _symbol;
+    uint8 _decimals;
+    TokenStatus _status;
     ModularTokenLib.TokenStorage tokenStorage;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -27,10 +33,9 @@ contract ModularSecurityToken is ERC1411,Ownable {
 
     modifier isReleased()
     {
-        require(tokenStorage.status == ModularTokenLib.TokenStatus.Released, "Token must be released");
+        require(_status == TokenStatus.Released, "Token must be released");
         _;
     }
-
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -87,19 +92,19 @@ contract ModularSecurityToken is ERC1411,Ownable {
     function name()
     external view returns(string)
     {
-        return tokenStorage._name();
+        return _name;
     }
 
     function symbol()
     external view returns(string)
     {
-        return tokenStorage._symbol();
+        return _symbol;
     }
 
     function decimals()
     external view returns(uint8)
     {
-        return tokenStorage._decimals();
+        return _decimals;
     }
 
     function granularity()
@@ -275,30 +280,31 @@ contract ModularSecurityToken is ERC1411,Ownable {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    constructor(string _name, string _symbol, uint8 _decimals, uint256 _granularity, address[] _defaultOperators)
+    constructor(string __name, string __symbol, uint8 __decimals, uint256 _granularity, address[] _defaultOperators)
     public
     {
-        tokenStorage.name = _name;
-        tokenStorage.symbol = _symbol;
-        tokenStorage.decimals = _decimals;
+        _name = __name;
+        _symbol = __symbol;
+        _decimals = __decimals;
         tokenStorage.granularity = _granularity;
         tokenStorage.defaultOperators = _defaultOperators;
         tokenStorage.issuable = true;
+        _status = TokenStatus.Draft;
     }
 
     function status()
-    external view returns(ModularTokenLib.TokenStatus)
+    external view returns(TokenStatus)
     {
-        return tokenStorage.status;
+        return _status;
     }
 
     function release()
     external
     {
-        require(tokenStorage.status == ModularTokenLib.TokenStatus.Draft, "Token is not in draft status");
+        require(_status == TokenStatus.Draft, "Token is not in draft status");
         require(tokenStorage._isDefaultOperator(msg.sender), "Only default operators can do this");
 
-        tokenStorage.status = ModularTokenLib.TokenStatus.Released;
+        _status = TokenStatus.Released;
     }
 }
 
