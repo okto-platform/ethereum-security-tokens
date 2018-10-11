@@ -30,36 +30,34 @@ contract ISecurityToken is Pausable {
 
     // ERC-1410
 
-    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes data) public view returns(bytes32);
+    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes data, bytes operatorData) public view returns(bytes32);
     function balanceOfByTranche(bytes32 tranche, address tokenHolder) public view returns (uint256);
     function sendByTranche(bytes32 tranche, address to, uint256 amount, bytes data) public returns (bytes32);
     function operatorSendByTranche(bytes32 tranche, address from, address to, uint256 amount, bytes data, bytes operatorData) public returns (bytes32);
     function tranchesOf(address tokenHolder) public view returns (bytes32[]);
-    function redeemByTranche(bytes32 tranche, uint256 amount, bytes data) public;
-    function operatorRedeemByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data, bytes operatorData) public;
 
     event SentByTranche(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address indexed to, uint256 amount, bytes data, bytes operatorData);
-    event RedeemedByTranche(bytes32 tranche, address indexed operator, address indexed from, uint256 amount, bytes data, bytes operatorData);
 
     // ERC-1411
 
-    function canSend(address _from, address _to, bytes32 _tranche, uint256 _amount, bytes _data) public view returns (byte, bytes32, bytes32);
-    function issueByTranche(bytes32 _tranche, address _tokenHolder, uint256 _amount, bytes _data) public;
+    function canSend(bytes32 tranche, address from, address to, uint256 amount, bytes data, bytes operatorData) public view returns (byte, bytes32, bytes32);
+    function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data) public;
+    function redeemByTranche(bytes32 tranche, uint256 amount, bytes data) public;
+    function operatorRedeemByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data, bytes operatorData) public;
 
     event IssuedByTranche(bytes32 indexed tranche, address indexed to, uint256 amount, bytes data);
+    event RedeemedByTranche(bytes32 tranche, address indexed operator, address indexed from, uint256 amount, bytes data, bytes operatorData);
 }
 
 contract SecurityToken is ISecurityToken {
     using SafeMath for uint256;
-
-    enum TokenStatus {Draft, Ready, InitialOffering, InitialOfferingCompleted, Trading}
 
     mapping(address => mapping(bytes32 => uint256)) internal balancesPerTranche;
     mapping(address => uint256) internal balances;
     mapping(address => bytes32[]) internal tranches;
     address[] public defaultOperators;
     mapping(address => mapping(address => bool)) internal operators;
-    TokenStatus public status;
+    bool public released;
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -68,21 +66,15 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    modifier inInitialOffering()
+    modifier isReleased()
     {
-        require(status == TokenStatus.InitialOffering, "Token is not during initial offering");
+        require(released, "Token is not released");
         _;
     }
 
-    modifier trading()
+    modifier isDraft()
     {
-        require(status != TokenStatus.Trading, "Token is not trading");
-        _;
-    }
-
-    modifier notDraft()
-    {
-        require(status != TokenStatus.Draft, "Token is still in draft");
+        require(!released, "Token is already released");
         _;
     }
 
@@ -156,7 +148,7 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    function getDestinationTranche(bytes32 sourceTranche, address, uint256, bytes)
+    function getDestinationTranche(bytes32 sourceTranche, address, uint256, bytes, bytes)
     public view returns(bytes32)
     {
         // the default implementation is to transfer to the same tranche
@@ -171,25 +163,20 @@ contract SecurityToken is ISecurityToken {
     }
 
     function sendByTranche(bytes32 tranche, address to, uint256 amount, bytes data)
-    trading whenNotPaused
+    isReleased whenNotPaused
     public returns (bytes32)
     {
-        require(amount <= balancesPerTranche[msg.sender][tranche], "Insufficient funds in tranche");
         require(to != address(0), "Cannot transfer to address 0x0");
-        require(amount >= 0, "Amount cannot be negative");
 
         return internalSendByTranche(tranche, address(0), msg.sender, to, amount, data, new bytes(0));
     }
 
     function operatorSendByTranche(bytes32 tranche, address from, address to, uint256 amount, bytes data, bytes operatorData)
-    notDraft whenNotPaused
+    isReleased whenNotPaused
     public returns (bytes32)
     {
         require(isOperatorFor(msg.sender, from), "Invalid operator");
-        require(amount <= balancesPerTranche[from][tranche], "Insufficient funds in tranche");
         require(from != address(0), "Cannot transfer from address 0x0");
-        require(to != address(0), "Cannot transfer to address 0x0");
-        require(amount >= 0, "Amount cannot be negative");
 
         return internalSendByTranche(tranche, msg.sender, from, to, amount, data, operatorData);
     }
@@ -197,9 +184,13 @@ contract SecurityToken is ISecurityToken {
     function internalSendByTranche(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
     internal returns (bytes32)
     {
-        // TODO call canSend
+        require(amount <= balancesPerTranche[from][tranche], "Insufficient funds in tranche");
+        require(to != address(0), "Cannot transfer to address 0x0");
+        require(amount >= 0, "Amount cannot be negative");
 
-        bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data);
+        verifyCanSendOrRevert(tranche, msg.sender, to, amount, data, operatorData);
+
+        bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
         balancesPerTranche[from][tranche] = balancesPerTranche[from][tranche].sub(amount);
         balancesPerTranche[to][destinationTranche] = balancesPerTranche[to][destinationTranche].add(amount);
         // TODO make sure that tranche is added to destination
@@ -207,9 +198,11 @@ contract SecurityToken is ISecurityToken {
         // update global balances
         balances[from] = balances[from].sub(amount);
         balances[to] = balances[to].add(amount);
+
         // trigger events
         emit SentByTranche(tranche, destinationTranche, operator, from, to, amount, data, operatorData);
-        // TODO trigger Transfer event for ERC-20 compatibilitiy
+        emit Transfer(from, to, amount); // this is for compatibility with ERC-20
+
         return destinationTranche;
     }
 
@@ -219,20 +212,64 @@ contract SecurityToken is ISecurityToken {
         return tranches[tokenHolder];
     }
 
-    function redeemByTranche(bytes32 tranche, uint256 amount, bytes data)
-    notDraft whenNotPaused
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    // ERC-1411 Security Token
+    //
+    ///////////////////////////////////////////////////////////////////////////
+
+    function canSend(bytes32 tranche, address, address to, uint256 amount, bytes data, bytes operatorData)
+    public view returns (byte, bytes32, bytes32)
+    {
+        bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
+        // TODO we need to go through all the transfer modules and check if we can send
+        return (0xA0, bytes32(0x0), destinationTranche);
+    }
+
+    function verifyCanSendOrRevert(bytes32 tranche, address from, address to, uint256 amount, bytes data, bytes operatorData)
+    internal view
+    {
+        byte errorCode;
+        bytes32 errorInfo;
+        bytes32 destTranche;
+
+        (errorCode, errorInfo, destTranche) = canSend(tranche, from, to, amount, data, operatorData);
+
+        // TODO we need to determine with more precision when the transaction fails
+        if (errorCode != 0xA0) {
+            // TODO ideally we should revert with a more precise error message
+            revert("This operation is restricted");
+        }
+    }
+
+    function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data)
+    isReleased whenNotPaused
     public
     {
-        require(amount <= balancesPerTranche[msg.sender][tranche], "Insufficient funds in tranche");
+        require(tokenHolder != address(0), "Cannot issue tokens to address 0x0");
+        require(isDefaultOperator(msg.sender), "Only default operators can do this");
 
+        verifyCanSendOrRevert(tranche, address(0), tokenHolder, amount, data, new bytes(0));
+
+        balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].add(amount);
+        balances[tokenHolder] = balances[tokenHolder].add(amount);
+        totalSupply = totalSupply.add(amount);
+
+        emit IssuedByTranche(tranche, tokenHolder, amount, data);
+    }
+
+
+    function redeemByTranche(bytes32 tranche, uint256 amount, bytes data)
+    isReleased whenNotPaused
+    public
+    {
         internalRedeemByTranche(tranche, address(0), msg.sender, amount, data, new bytes(0));
     }
 
     function operatorRedeemByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data, bytes operatorData)
-    notDraft
+    isReleased whenNotPaused
     public
     {
-        require(amount <= balancesPerTranche[msg.sender][tranche], "Insufficient funds in tranche");
         require(isOperatorFor(msg.sender, tokenHolder), "Invalid operator");
         require(tokenHolder != address(0), "Cannot burn tokens from address 0x0");
 
@@ -242,7 +279,10 @@ contract SecurityToken is ISecurityToken {
     function internalRedeemByTranche(bytes32 tranche, address operator, address tokenHolder, uint256 amount, bytes data, bytes operatorData)
     internal
     {
-        // TODO call canSend with the destination address 0
+        require(amount <= balancesPerTranche[tokenHolder][tranche], "Insufficient funds in tranche");
+
+        verifyCanSendOrRevert(tranche, tokenHolder, address(0), amount, data, operatorData);
+
         balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].sub(amount);
         // TODO remove tranche if the balance is zero for the source
         // update global balances
@@ -250,37 +290,7 @@ contract SecurityToken is ISecurityToken {
         // reduce total supply of tokens
         totalSupply = totalSupply.sub(amount);
         // trigger events
-        emit RedeemByTranche(tranche, operator, tokenHolder, amount, data, operatorData);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    // ERC-1411 Security Token
-    //
-    ///////////////////////////////////////////////////////////////////////////
-
-    function canSend(address, address to, bytes32 tranche, uint256 amount, bytes data)
-    public view returns (byte, bytes32, bytes32)
-    {
-        bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data);
-        // TODO we need to go through all the transfer modules and check if we can send
-        return (0xA0, bytes32(0x0), destinationTranche);
-    }
-
-    function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data)
-    inOffering onlyOwner
-    public
-    {
-        require(tokenHolder != address(0), "Cannot issue tokens to address 0x0");
-        // TODO we should only allow offering modules to do this
-        require(issuable, "It is not possible to issue more tokens");
-        require(isDefaultOperator(msg.sender), "Only default operators can do this");
-
-        balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].add(amount);
-        balances[tokenHolder] = balances[tokenHolder].add(amount);
-        totalSupply = totalSupply.add(amount);
-
-        emit IssuedByTranche(tranche, tokenHolder, amount, data);
+        emit RedeemedByTranche(tranche, operator, tokenHolder, amount, data, operatorData);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -296,50 +306,15 @@ contract SecurityToken is ISecurityToken {
         symbol = _symbol;
         decimals = _decimals;
         defaultOperators = _defaultOperators;
-        issuable = true;
-        status = TokenStatus.Draft;
     }
 
-    function status()
-    public view returns(TokenStatus)
-    {
-        return status;
-    }
-
-    function ready()
+    function release()
     onlyOwner
     public
     {
-        require(status != TokenStatus.Draft, "Token must be in draft");
+        require(!released, "Token already released");
 
-        status = TokenStatus.Ready;
-    }
-
-    function startInitialOffering()
-    onlyOwner
-    public
-    {
-        require(status != TokenStatus.Ready, "Token must be ready");
-
-        status = TokenStatus.InitialOffering;
-    }
-
-    function endInitialOffering()
-    onlyOwner
-    public
-    {
-        require(status != TokenStatus.InitialOffering, "Token must be in initial offering");
-
-        status = TokenStatus.InitialOfferingCompleted;
-    }
-
-    function startTrading()
-    onlyOwner
-    public
-    {
-        require(status != TokenStatus.InitialOfferingCompleted, "Initial offering must be completed");
-
-        status = TokenStatus.Trading;
+        released = true;
     }
 }
 
