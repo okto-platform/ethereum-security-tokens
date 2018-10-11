@@ -4,13 +4,14 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../utils/Factory.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
+import "../utils/Bytes32ArrayLib.sol";
 
 contract ISecurityToken is Pausable {
     // ERC-20
 
     uint256 public totalSupply;
 
-    function balanceOf(address _who) public view returns (uint256);
+    function balanceOf(address tokenHolder) public view returns (uint256);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
@@ -19,6 +20,7 @@ contract ISecurityToken is Pausable {
     string public name;
     string public symbol;
     uint8 public decimals;
+    address[] public defaultOperators;
 
     function authorizeOperator(address operator) public;
     function revokeOperator(address operator) public;
@@ -47,6 +49,14 @@ contract ISecurityToken is Pausable {
 
     event IssuedByTranche(bytes32 indexed tranche, address indexed to, uint256 amount, bytes data);
     event RedeemedByTranche(bytes32 tranche, address indexed operator, address indexed from, uint256 amount, bytes data, bytes operatorData);
+
+    // SLINGR Security Token
+
+    bool public released;
+
+    function release() public;
+
+    event Released();
 }
 
 contract SecurityToken is ISecurityToken {
@@ -55,10 +65,7 @@ contract SecurityToken is ISecurityToken {
     mapping(address => mapping(bytes32 => uint256)) internal balancesPerTranche;
     mapping(address => uint256) internal balances;
     mapping(address => bytes32[]) internal tranches;
-    address[] public defaultOperators;
     mapping(address => mapping(address => bool)) internal operators;
-    bool public released;
-
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -84,10 +91,10 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    function balanceOf(address owner)
+    function balanceOf(address tokenHolder)
     public view returns (uint256)
     {
-        return balanceOf(owner);
+        return balances[tokenHolder];
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -193,8 +200,14 @@ contract SecurityToken is ISecurityToken {
         bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
         balancesPerTranche[from][tranche] = balancesPerTranche[from][tranche].sub(amount);
         balancesPerTranche[to][destinationTranche] = balancesPerTranche[to][destinationTranche].add(amount);
-        // TODO make sure that tranche is added to destination
-        // TODO remove tranche if the balance is zero for the source
+        // make sure that tranche is added to destination
+        if (amount > 0) {
+            Bytes32ArrayLib.addIfNotPresent(tranches[to], tranche);
+        }
+        // remove tranche if the balance is zero for the source
+        if (balancesPerTranche[from][tranche] == 0) {
+            Bytes32ArrayLib.removeValue(tranches[from], tranche);
+        }
         // update global balances
         balances[from] = balances[from].sub(amount);
         balances[to] = balances[to].add(amount);
@@ -253,6 +266,9 @@ contract SecurityToken is ISecurityToken {
 
         balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].add(amount);
         balances[tokenHolder] = balances[tokenHolder].add(amount);
+        if (amount > 0) {
+            Bytes32ArrayLib.addIfNotPresent(tranches[tokenHolder], tranche);
+        }
         totalSupply = totalSupply.add(amount);
 
         emit IssuedByTranche(tranche, tokenHolder, amount, data);
@@ -284,7 +300,9 @@ contract SecurityToken is ISecurityToken {
         verifyCanSendOrRevert(tranche, tokenHolder, address(0), amount, data, operatorData);
 
         balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].sub(amount);
-        // TODO remove tranche if the balance is zero for the source
+        if (balancesPerTranche[tokenHolder][tranche] == 0) {
+            Bytes32ArrayLib.removeValue(tranches[tokenHolder], tranche);
+        }
         // update global balances
         balances[tokenHolder] = balances[tokenHolder].sub(amount);
         // reduce total supply of tokens
@@ -315,6 +333,8 @@ contract SecurityToken is ISecurityToken {
         require(!released, "Token already released");
 
         released = true;
+
+        emit Released();
     }
 }
 
