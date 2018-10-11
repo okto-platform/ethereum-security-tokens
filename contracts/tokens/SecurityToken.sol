@@ -6,6 +6,7 @@ import "../utils/Factory.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "../utils/Bytes32ArrayLib.sol";
 import "../utils/AddressArrayLib.sol";
+import "./SecurityTokenModule.sol";
 
 contract ISecurityToken is Pausable {
     // ERC-20
@@ -47,7 +48,7 @@ contract ISecurityToken is Pausable {
 
     // ERC-1411
 
-    function canSend(bytes32 tranche, address from, address to, uint256 amount, bytes data, bytes operatorData) public view returns (byte, bytes32, bytes32);
+    function canSend(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData) public view returns (byte, bytes32, bytes32);
     function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data) public;
     function redeemByTranche(bytes32 tranche, uint256 amount, bytes data) public;
     function operatorRedeemByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data, bytes operatorData) public;
@@ -59,8 +60,12 @@ contract ISecurityToken is Pausable {
 
     bool public released;
 
+    function addModule(address moduleAddress) public;
+    function removeModule(address moduleAddress) public;
     function release() public;
 
+    event AddedModule(address moduleAddress);
+    event RemovedModule(address moduleAddress);
     event Released();
 }
 
@@ -71,6 +76,11 @@ contract SecurityToken is ISecurityToken {
     mapping(address => uint256) internal balances;
     mapping(address => bytes32[]) internal tranches;
     mapping(address => mapping(address => bool)) internal operators;
+
+    // modules defined for the token
+    address[] internal transferValidators;
+    address[] internal transferListeners;
+    address[] internal tranchesManagers;
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -179,12 +189,17 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    function getDestinationTranche(bytes32 sourceTranche, address, uint256, bytes, bytes)
+    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes data, bytes operatorData)
     public view returns(bytes32)
     {
         // the default implementation is to transfer to the same tranche
-        // TODO we should allow to override this behavior through modules
-        return sourceTranche;
+        bytes32 destinationTranche = sourceTranche;
+        TranchesManagerTokenModule tranchesManager;
+        for (uint i = 0; i < tranchesManagers.length; i++) {
+            tranchesManager = TranchesManagerTokenModule(tranchesManagers[i]);
+            destinationTranche = tranchesManager.calculateDestinationTranche(destinationTranche, sourceTranche, from, amount, data, operatorData);
+        }
+        return destinationTranche;
     }
 
     function balanceOfByTranche(bytes32 tranche, address tokenHolder)
@@ -219,7 +234,7 @@ contract SecurityToken is ISecurityToken {
         require(to != address(0), "Cannot transfer to address 0x0");
         require(amount >= 0, "Amount cannot be negative");
 
-        verifyCanSendOrRevert(tranche, msg.sender, to, amount, data, operatorData);
+        verifyCanSendOrRevert(tranche, operator, msg.sender, to, amount, data, operatorData);
 
         bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
         balancesPerTranche[from][tranche] = balancesPerTranche[from][tranche].sub(amount);
@@ -240,6 +255,9 @@ contract SecurityToken is ISecurityToken {
         emit SentByTranche(tranche, destinationTranche, operator, from, to, amount, data, operatorData);
         emit Transfer(from, to, amount); // this is for compatibility with ERC-20
 
+        // notify listeners
+        notifyTransfer(tranche, destinationTranche, operator, from, to, amount, data, operatorData);
+
         return destinationTranche;
     }
 
@@ -255,7 +273,7 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    function canSend(bytes32 tranche, address, address to, uint256 amount, bytes data, bytes operatorData)
+    function canSend(bytes32 tranche, address, address, address to, uint256 amount, bytes data, bytes operatorData)
     public view returns (byte, bytes32, bytes32)
     {
         bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
@@ -263,19 +281,29 @@ contract SecurityToken is ISecurityToken {
         return (0xA0, bytes32(0x0), destinationTranche);
     }
 
-    function verifyCanSendOrRevert(bytes32 tranche, address from, address to, uint256 amount, bytes data, bytes operatorData)
+    function verifyCanSendOrRevert(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
     internal view
     {
         byte errorCode;
         bytes32 errorInfo;
         bytes32 destTranche;
 
-        (errorCode, errorInfo, destTranche) = canSend(tranche, from, to, amount, data, operatorData);
+        (errorCode, errorInfo, destTranche) = canSend(tranche, operator, from, to, amount, data, operatorData);
 
         // TODO we need to determine with more precision when the transaction fails
         if (errorCode != 0xA0) {
             // TODO ideally we should revert with a more precise error message
             revert("This operation is restricted");
+        }
+    }
+
+    function notifyTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
+    internal
+    {
+        TransferListenerTokenModule transferListener;
+        for (uint i = 0; i < transferListeners.length; i++) {
+            transferListener = TransferListenerTokenModule(transferListeners[i]);
+            transferListener.transferDone(fromTranche, toTranche, operator, from, to, amount, data, operatorData);
         }
     }
 
@@ -286,7 +314,7 @@ contract SecurityToken is ISecurityToken {
         require(tokenHolder != address(0), "Cannot issue tokens to address 0x0");
         require(isDefaultOperator(msg.sender), "Only default operators can do this");
 
-        verifyCanSendOrRevert(tranche, address(0), tokenHolder, amount, data, new bytes(0));
+        verifyCanSendOrRevert(tranche, msg.sender, address(0), tokenHolder, amount, data, new bytes(0));
 
         balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].add(amount);
         balances[tokenHolder] = balances[tokenHolder].add(amount);
@@ -296,6 +324,9 @@ contract SecurityToken is ISecurityToken {
         totalSupply = totalSupply.add(amount);
 
         emit IssuedByTranche(tranche, tokenHolder, amount, data);
+
+        // notify listeners
+        notifyTransfer(bytes32(0), tranche, msg.sender, address(0), tokenHolder, amount, data, new bytes(0));
     }
 
 
@@ -321,7 +352,7 @@ contract SecurityToken is ISecurityToken {
     {
         require(amount <= balancesPerTranche[tokenHolder][tranche], "Insufficient funds in tranche");
 
-        verifyCanSendOrRevert(tranche, tokenHolder, address(0), amount, data, operatorData);
+        verifyCanSendOrRevert(tranche, operator, tokenHolder, address(0), amount, data, operatorData);
 
         balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].sub(amount);
         if (balancesPerTranche[tokenHolder][tranche] == 0) {
@@ -333,6 +364,8 @@ contract SecurityToken is ISecurityToken {
         totalSupply = totalSupply.sub(amount);
         // trigger events
         emit RedeemedByTranche(tranche, operator, tokenHolder, amount, data, operatorData);
+        // notify listeners
+        notifyTransfer(tranche, bytes32(0), operator, tokenHolder, address(0), amount, data, new bytes(0));
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -348,6 +381,41 @@ contract SecurityToken is ISecurityToken {
         symbol = _symbol;
         decimals = _decimals;
         defaultOperators = _defaultOperators;
+    }
+
+    function addModule(address moduleAddress)
+    onlyOwner isDraft
+    public
+    {
+        require(moduleAddress != address(0), "Module address is required");
+
+        SecurityTokenModule module = SecurityTokenModule(moduleAddress);
+        SecurityTokenModule.Feature[] memory features = module.getFeatures();
+
+        require(features.length > 0, "Token module does not have any feature");
+
+        for (uint i = 0; i < features.length; i++) {
+            if (features[i] == SecurityTokenModule.Feature.TransferValidator) {
+                AddressArrayLib.addIfNotPresent(transferValidators, moduleAddress);
+            } else if (features[i] == SecurityTokenModule.Feature.TransferListener) {
+                AddressArrayLib.addIfNotPresent(transferListeners, moduleAddress);
+            } else if (features[i] == SecurityTokenModule.Feature.TranchesManager) {
+                AddressArrayLib.addIfNotPresent(tranchesManagers, moduleAddress);
+            }
+        }
+
+        emit AddedModule(moduleAddress);
+    }
+
+    function removeModule(address moduleAddress)
+    onlyOwner isDraft
+    public
+    {
+        AddressArrayLib.removeValue(transferValidators, moduleAddress);
+        AddressArrayLib.removeValue(transferListeners, moduleAddress);
+        AddressArrayLib.removeValue(tranchesManagers, moduleAddress);
+
+        emit RemovedModule(moduleAddress);
     }
 
     function release()
