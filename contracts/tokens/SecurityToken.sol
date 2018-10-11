@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../utils/Factory.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "../utils/Bytes32ArrayLib.sol";
+import "../utils/AddressArrayLib.sol";
 
 contract ISecurityToken is Pausable {
     // ERC-20
@@ -25,10 +26,14 @@ contract ISecurityToken is Pausable {
     function authorizeOperator(address operator) public;
     function revokeOperator(address operator) public;
     function isOperatorFor(address operator, address tokenHolder) public view returns (bool);
+    function authorizeDefaultOperator(address operator) public;
+    function revokeDefaultOperator(address operator) public;
     function isDefaultOperator(address operator) public view returns (bool);
 
     event AuthorizedOperator(address indexed operator, address indexed tokenHolder);
     event RevokedOperator(address indexed operator, address indexed tokenHolder);
+    event AuthorizedDefaultOperator(address indexed operator);
+    event RevokedDefaultOperator(address indexed operator);
 
     // ERC-1410
 
@@ -136,6 +141,27 @@ contract SecurityToken is ISecurityToken {
         return operators[tokenHolder][operator];
     }
 
+    function authorizeDefaultOperator(address operator)
+    onlyOwner
+    public
+    {
+        require(operator != address(0), "Invalid operator");
+
+        AddressArrayLib.addIfNotPresent(defaultOperators, operator);
+
+        emit AuthorizedDefaultOperator(operator);
+    }
+
+    function revokeDefaultOperator(address operator)
+    onlyOwner
+    public
+    {
+        AddressArrayLib.removeValue(defaultOperators, operator);
+
+        emit RevokedDefaultOperator(operator);
+
+    }
+
     function isDefaultOperator(address operator)
     public view returns (bool)
     {
@@ -146,8 +172,6 @@ contract SecurityToken is ISecurityToken {
         }
         return false;
     }
-
-    // TODO allow to change default operators by owner
 
     ///////////////////////////////////////////////////////////////////////////
     //

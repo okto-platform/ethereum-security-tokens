@@ -34,5 +34,6 @@ module.exports = function(deployer) {
   deployer.deploy(Bytes32ArrayLibTest);
 
   deployer.link(Bytes32ArrayLib, SecurityTokenFactory);
+  deployer.link(AddressArrayLib, SecurityTokenFactory);
   deployer.deploy(SecurityTokenFactory);
 };
