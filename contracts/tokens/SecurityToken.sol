@@ -48,7 +48,7 @@ contract ISecurityToken is Pausable {
 
     // ERC-1411
 
-    function canSend(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData) public view returns (byte, bytes32, bytes32);
+    function canSend(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData) public view returns (byte, string, bytes32);
     function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data) public;
     function redeemByTranche(bytes32 tranche, uint256 amount, bytes data) public;
     function operatorRedeemByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data, bytes operatorData) public;
@@ -273,27 +273,40 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    function canSend(bytes32 tranche, address, address, address to, uint256 amount, bytes data, bytes operatorData)
-    public view returns (byte, bytes32, bytes32)
+    function canSend(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
+    public view returns (byte result, string message, bytes32 destinationTranche)
     {
-        bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
-        // TODO we need to go through all the transfer modules and check if we can send
-        return (0xA0, bytes32(0x0), destinationTranche);
+        destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
+
+        if (amount > balancesPerTranche[from][tranche]) {
+            return (0xA4, "Insufficient funds", destinationTranche);
+        }
+
+        message = transferValidators.length > 0 ? "Approved" : "Restricted";
+        TransferValidatorTokenModule validator;
+
+        //  we need to go through all the transfer modules and check if we can send
+        // if there are multiple errors, only the last one will be returned
+        for (uint i = 0; i < transferValidators.length; i++) {
+            validator = TransferValidatorTokenModule(transferValidators[i]);
+            (result, message) = validator.validateTransfer(tranche, destinationTranche, operator, from, to, amount, data, operatorData);
+            if (result != 0xA0 && result != 0xA1 && result != 0xA2) {
+                // there is an error or a forced transfer, so we will stop at this point
+                break;
+            }
+        }
     }
 
     function verifyCanSendOrRevert(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
     internal view
     {
-        byte errorCode;
-        bytes32 errorInfo;
-        bytes32 destTranche;
+        byte code;
+        string memory message;
 
-        (errorCode, errorInfo, destTranche) = canSend(tranche, operator, from, to, amount, data, operatorData);
+        (code, message, ) = canSend(tranche, operator, from, to, amount, data, operatorData);
 
-        // TODO we need to determine with more precision when the transaction fails
-        if (errorCode != 0xA0) {
-            // TODO ideally we should revert with a more precise error message
-            revert("This operation is restricted");
+        if (code != 0xA0 && code != 0xA1 && code != 0xA2) {
+            revert(message);
         }
     }
 

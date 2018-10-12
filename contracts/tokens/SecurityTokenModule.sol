@@ -4,8 +4,24 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./SecurityToken.sol";
 
 contract TransferValidatorTokenModule {
-    function validateTransfer(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
-    public view returns (byte, bytes32, bytes32);
+
+    // Validation codes:
+    //
+    // 0xA0	Transfer Verified - Unrestricted
+    // 0xA1 Transfer Verified - On-Chain approval for restricted token
+    // 0xA2	Transfer Verified - Off-Chain approval for restricted token
+    // 0xA3	Transfer Blocked - Sender lockup period not ended
+    // 0xA4	Transfer Blocked - Sender balance insufficient
+    // 0xA5	Transfer Blocked - Sender not eligible
+    // 0xA6	Transfer Blocked - Receiver not eligible
+    // 0xA7	Transfer Blocked - Identity restriction
+    // 0xA8	Transfer Blocked - Token restriction
+    // 0xA9	Transfer Blocked - Token granularity
+    // 0xAA Transfer Blocked - Negative amount
+    // 0xAF Transfer Verified - Forced
+
+    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
+    public view returns (byte, string);
 }
 
 contract TransferListenerTokenModule {
