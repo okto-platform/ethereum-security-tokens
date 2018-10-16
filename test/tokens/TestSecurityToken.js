@@ -1,15 +1,7 @@
+const truffleAssert = require('truffle-assertions');
+
 const SecurityTokenFactory = artifacts.require("SecurityTokenFactory");
 const SecurityToken = artifacts.require("SecurityToken");
-
-let checkEvent = function(result, eventName) {
-    for (let i = 0; i < result.logs.length; i++) {
-        let log = result.logs[i];
-        if (log.event == eventName) {
-            return true;
-        }
-    }
-    return false;
-};
 
 let padBytes32 = function(value) {
     return value.padEnd(66, '0');
@@ -55,7 +47,7 @@ contract('SecurityTokenFactory', async(accounts) => {
     it('configure token', async() => {
         let token = await SecurityToken.at(tokenAddress);
         let result = await token.release({from: owner});
-        checkEvent(result, 'Released');
+        truffleAssert.eventEmitted(result, 'Released');
 
         let released = await token.released.call();
         assert.equal(released, true, 'Token is not released');
@@ -65,13 +57,13 @@ contract('SecurityTokenFactory', async(accounts) => {
     it('issue tokens', async() => {
         let token = await SecurityToken.at(tokenAddress);
         let result = await token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1});
-        checkEvent(result, 'IssuedByTranche');
+        truffleAssert.eventEmitted(result, 'IssuedByTranche');
         result = await token.issueByTranche(trancheLocked, investor1, 1000, dataIssuing, {from: operator1});
-        checkEvent(result, 'IssuedByTranche');
+        truffleAssert.eventEmitted(result, 'IssuedByTranche');
         result = await token.issueByTranche(trancheUnrestricted, investor2, 2000, dataIssuing, {from: operator2});
-        checkEvent(result, 'IssuedByTranche');
+        truffleAssert.eventEmitted(result, 'IssuedByTranche');
         result = await token.issueByTranche(trancheLocked, investor2, 1000, dataIssuing, {from: operator2});
-        checkEvent(result, 'IssuedByTranche');
+        truffleAssert.eventEmitted(result, 'IssuedByTranche');
 
         let globalBalance = await token.balanceOf.call(investor1);
         let unrestrictedBalance = await token.balanceOfByTranche.call(trancheUnrestricted, investor1);
@@ -92,8 +84,8 @@ contract('SecurityTokenFactory', async(accounts) => {
     it('investor transfer tokens', async() => {
         let token = await SecurityToken.at(tokenAddress);
         let result = await token.sendByTranche(trancheUnrestricted, investor3, 200, dataUserTransfer, {from: investor1});
-        checkEvent(result, 'SentByTranche');
-        checkEvent(result, 'Transfer');
+        truffleAssert.eventEmitted(result, 'SentByTranche');
+        truffleAssert.eventEmitted(result, 'Transfer');
 
         let globalBalance = await token.balanceOf.call(investor1);
         let unrestrictedBalance = await token.balanceOfByTranche.call(trancheUnrestricted, investor1);
@@ -114,8 +106,8 @@ contract('SecurityTokenFactory', async(accounts) => {
     it('operator transfer tokens', async() => {
         let token = await SecurityToken.at(tokenAddress);
         let result = await token.operatorSendByTranche(trancheLocked, investor2, investor3, 500, dataUserTransfer, dataOperatorTransfer, {from: operator1});
-        checkEvent(result, 'SentByTranche');
-        checkEvent(result, 'Transfer');
+        truffleAssert.eventEmitted(result, 'SentByTranche');
+        truffleAssert.eventEmitted(result, 'Transfer');
 
         let globalBalance = await token.balanceOf.call(investor2);
         let unrestrictedBalance = await token.balanceOfByTranche.call(trancheUnrestricted, investor2);
@@ -150,8 +142,8 @@ contract('SecurityTokenFactory', async(accounts) => {
 
         // check that tranche is remove after it goes to zero
         let result = await token.operatorSendByTranche(trancheLocked, investor2, investor3, 500, dataUserTransfer, dataOperatorTransfer, {from: operator1});
-        checkEvent(result, 'SentByTranche');
-        checkEvent(result, 'Transfer');
+        truffleAssert.eventEmitted(result, 'SentByTranche');
+        truffleAssert.eventEmitted(result, 'Transfer');
         tranches = await token.tranchesOf.call(investor2);
         assert.equal(tranches.length, 1, 'Tranche was not removed when it was zero');
         assert.include(tranches, trancheUnrestricted, 'Unrestricted tranche not found');

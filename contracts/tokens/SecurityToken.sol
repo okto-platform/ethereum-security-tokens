@@ -100,6 +100,11 @@ contract SecurityToken is ISecurityToken {
         _;
     }
 
+    modifier onlyOwnerTx() {
+        require(msg.sender == owner || tx.origin == owner);
+        _;
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     //
     // ERC-20 Standard Token
@@ -398,7 +403,7 @@ contract SecurityToken is ISecurityToken {
     }
 
     function addModule(address moduleAddress)
-    onlyOwner isDraft
+    onlyOwnerTx isDraft
     public
     {
         require(moduleAddress != address(0), "Module address is required");
@@ -422,7 +427,7 @@ contract SecurityToken is ISecurityToken {
     }
 
     function removeModule(address moduleAddress)
-    onlyOwner isDraft
+    onlyOwnerTx isDraft
     public
     {
         AddressArrayLib.removeValue(transferValidators, moduleAddress);

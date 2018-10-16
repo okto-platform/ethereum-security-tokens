@@ -1,180 +1,106 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../utils/Factory.sol";
+import "../utils/AddressArrayLib.sol";
 
 contract Whitelist is Ownable {
-    enum PropertyType {Undefined, String, Number, Boolean}
+    using AddressArrayLib for address[];
 
-    mapping(address => mapping(string => string)) stringProperties;
-    mapping(address => mapping(string => uint)) uintProperties;
-    mapping(address => mapping(string => bool)) boolProperties;
+    address[] public validators;
+    mapping(address => mapping(byte => string)) stringProperties;
+    mapping(address => mapping(byte => uint)) uintProperties;
+    mapping(address => mapping(byte => bool)) boolProperties;
 
-    function setProperty(address _investor, string _property, string _value)
-    public onlyOwner
-    {
-        require(checkPropertyType(_property, PropertyType.String), "Property is not valid or not a string");
-        require(isValidValueForProperty(_property, _value), "Value is not valid for this property");
-
-        stringProperties[_investor][_property] = _value;
+    modifier onlyValidator {
+        require(validators.contains(msg.sender), "Only validators can do this");
+        _;
     }
 
-    function setProperty(address _investor, string _property, bool _value)
-    public onlyOwner
+    constructor(address[] _validators)
+    public
     {
-        require(checkPropertyType(_property, PropertyType.Boolean), "Property is not valid or not boolean");
-        require(isValidValueForProperty(_property, _value), "Value is not valid for this property");
-
-        boolProperties[_investor][_property] = _value;
+        validators = _validators;
     }
 
-    function setProperty(address _investor, string _property, uint _value)
-    public onlyOwner
+    function addValidator(address validator)
+    onlyOwner
+    public
     {
-        require(checkPropertyType(_property, PropertyType.Number), "Property is not valid or not a number");
-        require(isValidValueForProperty(_property, _value), "Value is not valid for this property");
+        require(validator != address(0), "Invalid validator address");
 
-        uintProperties[_investor][_property] = _value;
+        validators.addIfNotPresent(validator);
+
+        emit AddedValidator(validator);
     }
 
-    function checkPropertyTrue(address _investor, string _property)
+    function removeValidator(address validator)
+    onlyOwner
+    public
+    {
+        require(validator != address(0), "Invalid validator address");
+
+        validators.removeValue(validator);
+
+        emit RemovedValidator(validator);
+    }
+
+    function isValidator(address validator)
     public view returns(bool)
     {
-        require(checkPropertyType(_property, PropertyType.Boolean));
-
-        bool propValue = boolProperties[_investor][_property];
-        if (propValue) {
-            return true;
-        } else {
-            return false;
-        }
+        return validators.contains(validator);
     }
 
-    function checkPropertyFalse(address _investor, string _property)
+    function setString(address investor, byte prop, string value)
+    onlyValidator
+    public
+    {
+        stringProperties[investor][prop] = value;
+    }
+
+    function setBool(address investor, byte prop, bool value)
+    onlyValidator
+    public
+    {
+        boolProperties[investor][prop] = value;
+    }
+
+    function setNumber(address investor, byte prop, uint value)
+    onlyValidator
+    public
+    {
+        uintProperties[investor][prop] = value;
+    }
+
+    function getString(address investor, byte prop)
+    public view returns(string)
+    {
+        return stringProperties[investor][prop];
+    }
+
+    function getBool(address investor, byte prop)
     public view returns(bool)
     {
-        require(checkPropertyType(_property, PropertyType.Boolean));
-
-        bool propValue = boolProperties[_investor][_property];
-        if (propValue) {
-            return false;
-        } else {
-            return true;
-        }
+        return boolProperties[investor][prop];
     }
 
-    function checkPropertyEquals(address _investor, string _property, string _value)
-    public view returns(bool)
+    function getNumber(address investor, byte prop)
+    public view returns(uint)
     {
-        require(checkPropertyType(_property, PropertyType.String));
-
-        string memory propValue = stringProperties[_investor][_property];
-        if (keccak256(bytes(propValue)) == keccak256(bytes(_value))) {
-            return true;
-        } else {
-            return false;
-        }
+        return uintProperties[investor][prop];
     }
 
-    function checkPropertyNotEquals(address _investor, string _property, string _value)
-    public view returns(bool)
+    event AddedValidator(address validator);
+    event RemovedValidator(address validator);
+}
+
+contract WhitelistFactory is Factory {
+    function createInstance(address[] validators)
+    public returns(address)
     {
-        require(checkPropertyType(_property, PropertyType.String));
-
-        string memory propValue = stringProperties[_investor][_property];
-        if (keccak256(bytes(propValue)) == keccak256(bytes(_value))) {
-            return false;
-        } else {
-            return true;
-        }
+        Whitelist instance = new Whitelist(validators);
+        instance.transferOwnership(msg.sender);
+        addInstance(instance);
+        return instance;
     }
-
-    function checkPropertyEquals(address _investor, string _property, uint256 _value)
-    public view returns(bool)
-    {
-        require(checkPropertyType(_property, PropertyType.Number));
-
-        uint propValue = uintProperties[_investor][_property];
-        if (propValue == _value) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function checkPropertyNotEquals(address _investor, string _property, uint256 _value)
-    public view returns(bool)
-    {
-        require(checkPropertyType(_property, PropertyType.Number));
-
-        uint propValue = uintProperties[_investor][_property];
-        if (propValue == _value) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    function checkPropertyGreater(address _investor, string _property, uint256 _value)
-    public view returns(bool)
-    {
-        require(checkPropertyType(_property, PropertyType.Number));
-
-        uint propValue = uintProperties[_investor][_property];
-        if (propValue > _value) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function checkPropertyGreaterOrEquals(address _investor, string _property, uint256 _value)
-    public view returns(bool)
-    {
-        require(checkPropertyType(_property, PropertyType.Number));
-
-        uint propValue = uintProperties[_investor][_property];
-        if (propValue >= _value) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function checkPropertyLess(address _investor, string _property, uint256 _value)
-    public view returns(bool)
-    {
-        require(checkPropertyType(_property, PropertyType.Number));
-
-        uint propValue = uintProperties[_investor][_property];
-        if (propValue < _value) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function checkPropertyLessOrEquals(address _investor, string _property, uint256 _value)
-    public view returns(bool)
-    {
-        require(checkPropertyType(_property, PropertyType.Number));
-
-        uint propValue = uintProperties[_investor][_property];
-        if (propValue <= _value) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function isValidValueForProperty(string _property, string _value)
-    public view returns(bool);
-
-    function isValidValueForProperty(string _property, bool _value)
-    public view returns(bool);
-
-    function isValidValueForProperty(string _property, uint _value)
-    public view returns(bool);
-
-    function checkPropertyType(string _property, PropertyType _type)
-    public view returns(bool);
 }

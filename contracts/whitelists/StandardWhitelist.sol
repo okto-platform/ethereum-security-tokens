@@ -1,51 +1,36 @@
 pragma solidity ^0.4.24;
 
-import "./Whitelist.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../utils/Factory.sol";
+import "./TypedWhitelist.sol";
 
-contract StandardWhitelist is Whitelist {
-    mapping (string => PropertyType) propertiesType;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Standard properties codes:
+//
+// 0x01 - bool - KYC flag
+// 0x02 - string - Country code (two letters lower case)
+// 0x03 - uint - Expiration timestamp
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    constructor()
+contract StandardWhitelist is TypedWhitelist {
+    constructor(address[] validators, byte[] props, TypedWhitelist.PropertyType[] types)
+    TypedWhitelist(validators, props, types)
     public
     {
-        propertiesType["kyc"] = PropertyType.Boolean;
-        propertiesType["expiration"] = PropertyType.Number;
-        propertiesType["country"] = PropertyType.String;
-    }
-
-    function isValidValueForProperty(string _property, string)
-    public view returns(bool)
-    {
-        return checkPropertyType(_property, PropertyType.String);
-    }
-
-
-    function isValidValueForProperty(string _property, bool)
-    public view returns(bool)
-    {
-        return checkPropertyType(_property, PropertyType.Boolean);
-    }
-
-    function isValidValueForProperty(string _property, uint)
-    public view returns(bool)
-    {
-        return checkPropertyType(_property, PropertyType.Number);
-    }
-
-    function checkPropertyType(string _property, PropertyType _type)
-    public view returns(bool)
-    {
-        PropertyType propertyType = propertiesType[_property];
-        return propertyType == _type;
+        // define this standard properties; if they were also passed in the constructor
+        // they will be overridden
+        propertiesType[0x01] = TypedWhitelist.PropertyType.Boolean;
+        propertiesType[0x02] = TypedWhitelist.PropertyType.String;
+        propertiesType[0x03] = TypedWhitelist.PropertyType.Number;
     }
 }
 
 contract StandardWhitelistFactory is Factory {
-    function createInstance()
+    function createInstance(address[] validators, byte[] props, TypedWhitelist.PropertyType[] types)
     public returns(address)
     {
-        StandardWhitelist instance = new StandardWhitelist();
+        StandardWhitelist instance = new StandardWhitelist(validators, props, types);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         return instance;

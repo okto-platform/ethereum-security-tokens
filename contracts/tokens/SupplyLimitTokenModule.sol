@@ -22,7 +22,7 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     }
 
 
-    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256 amount, bytes, bytes)
+    function validateTransfer(bytes32, bytes32, address, address from, address, uint256 amount, bytes, bytes)
     public view returns (byte, string)
     {
         if (from == address(0)) {
