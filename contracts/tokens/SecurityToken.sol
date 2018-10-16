@@ -234,7 +234,7 @@ contract SecurityToken is ISecurityToken {
         require(to != address(0), "Cannot transfer to address 0x0");
         require(amount >= 0, "Amount cannot be negative");
 
-        verifyCanSendOrRevert(tranche, operator, msg.sender, to, amount, data, operatorData);
+        verifyCanSendOrRevert(tranche, operator, from, to, amount, data, operatorData);
 
         bytes32 destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
         balancesPerTranche[from][tranche] = balancesPerTranche[from][tranche].sub(amount);
@@ -278,14 +278,15 @@ contract SecurityToken is ISecurityToken {
     {
         destinationTranche = getDestinationTranche(tranche, to, amount, data, operatorData);
 
-        if (amount > balancesPerTranche[from][tranche]) {
+        if (from != address(0) && amount > balancesPerTranche[from][tranche]) {
             return (0xA4, "Insufficient funds", destinationTranche);
         }
 
-        message = transferValidators.length > 0 ? "Approved" : "Restricted";
+        result = 0xA0;
+        message = transferValidators.length > 0 ? "Approved" : "Unrestricted";
         TransferValidatorTokenModule validator;
 
-        //  we need to go through all the transfer modules and check if we can send
+        // we need to go through all the transfer modules and check if we can send
         // if there are multiple errors, only the last one will be returned
         for (uint i = 0; i < transferValidators.length; i++) {
             validator = TransferValidatorTokenModule(transferValidators[i]);

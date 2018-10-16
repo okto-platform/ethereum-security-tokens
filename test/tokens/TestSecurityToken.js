@@ -147,5 +147,13 @@ contract('SecurityTokenFactory', async(accounts) => {
         tranches = await token.tranchesOf.call(investor3);
         assert.include(tranches, trancheUnrestricted, 'Unrestricted tranche not found');
         assert.include(tranches, trancheLocked, 'Locked tranche not found');
+
+        // check that tranche is remove after it goes to zero
+        let result = await token.operatorSendByTranche(trancheLocked, investor2, investor3, 500, dataUserTransfer, dataOperatorTransfer, {from: operator1});
+        checkEvent(result, 'SentByTranche');
+        checkEvent(result, 'Transfer');
+        tranches = await token.tranchesOf.call(investor2);
+        assert.equal(tranches.length, 1, 'Tranche was not removed when it was zero');
+        assert.include(tranches, trancheUnrestricted, 'Unrestricted tranche not found');
     });
 });
