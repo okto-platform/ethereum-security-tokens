@@ -50,7 +50,7 @@ contract('KycTokenModuleFactory', async(accounts) => {
         let moduleFactory = await KycTokenModuleFactory.deployed();
         await moduleFactory.createInstance(tokenAddress, whitelistAddress, {from: owner});
         let modulesCount = await moduleFactory.getInstancesCount.call();
-        moduleAddress = await whitelistFactory.getInstance.call(modulesCount - 1);
+        moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
 
         let token = SecurityToken.at(tokenAddress);
         await token.release({from: owner});
