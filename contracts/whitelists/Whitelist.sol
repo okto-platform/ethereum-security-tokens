@@ -37,7 +37,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyTrue(address _investor, string _property)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Boolean));
 
@@ -50,7 +50,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyFalse(address _investor, string _property)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Boolean));
 
@@ -63,7 +63,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyEquals(address _investor, string _property, string _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.String));
 
@@ -76,7 +76,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyNotEquals(address _investor, string _property, string _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.String));
 
@@ -89,7 +89,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyEquals(address _investor, string _property, uint256 _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Number));
 
@@ -102,7 +102,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyNotEquals(address _investor, string _property, uint256 _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Number));
 
@@ -115,7 +115,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyGreater(address _investor, string _property, uint256 _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Number));
 
@@ -128,7 +128,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyGreaterOrEquals(address _investor, string _property, uint256 _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Number));
 
@@ -141,7 +141,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyLess(address _investor, string _property, uint256 _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Number));
 
@@ -154,7 +154,7 @@ contract Whitelist is Ownable {
     }
 
     function checkPropertyLessOrEquals(address _investor, string _property, uint256 _value)
-    public returns(bool)
+    public view returns(bool)
     {
         require(checkPropertyType(_property, PropertyType.Number));
 
@@ -167,14 +167,14 @@ contract Whitelist is Ownable {
     }
 
     function isValidValueForProperty(string _property, string _value)
-    public returns(bool);
+    public view returns(bool);
 
     function isValidValueForProperty(string _property, bool _value)
-    public returns(bool);
+    public view returns(bool);
 
     function isValidValueForProperty(string _property, uint _value)
-    public returns(bool);
+    public view returns(bool);
 
     function checkPropertyType(string _property, PropertyType _type)
-    public returns(bool);
+    public view returns(bool);
 }

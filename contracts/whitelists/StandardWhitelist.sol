@@ -15,26 +15,26 @@ contract StandardWhitelist is Whitelist {
     }
 
     function isValidValueForProperty(string _property, string)
-    public returns(bool)
+    public view returns(bool)
     {
         return checkPropertyType(_property, PropertyType.String);
     }
 
 
     function isValidValueForProperty(string _property, bool)
-    public returns(bool)
+    public view returns(bool)
     {
         return checkPropertyType(_property, PropertyType.Boolean);
     }
 
     function isValidValueForProperty(string _property, uint)
-    public returns(bool)
+    public view returns(bool)
     {
         return checkPropertyType(_property, PropertyType.Number);
     }
 
     function checkPropertyType(string _property, PropertyType _type)
-    public returns(bool)
+    public view returns(bool)
     {
         PropertyType propertyType = propertiesType[_property];
         return propertyType == _type;

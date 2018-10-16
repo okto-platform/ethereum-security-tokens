@@ -1,11 +1,11 @@
 pragma solidity ^0.4.24;
 
-import "./TokenModule.sol";
 import "../whitelists/Whitelist.sol";
 import "../utils/Factory.sol";
+import "./TokenModule.sol";
 
-contract KycTokenModule is TokenModule {
-    address whitelistAddress;
+contract KycTokenModule is TransferValidatorTokenModule,TokenModule {
+    address public whitelistAddress;
 
     constructor(address _tokenAddress, address _whitelistAddress)
     TokenModule(_tokenAddress)
@@ -14,14 +14,23 @@ contract KycTokenModule is TokenModule {
         whitelistAddress = _whitelistAddress;
     }
 
-    function isTransferAllowed(address, address _to, uint256)
-    public
-    returns(TransferAllowanceResult) {
+    function getFeatures()
+    public view returns(TokenModule.Feature[])
+    {
+        TokenModule.Feature[] memory features = new TokenModule.Feature[](1);
+        features[0] = TokenModule.Feature.TransferValidator;
+        return features;
+    }
+
+
+    function validateTransfer(bytes32, bytes32, address, address, address to, uint256, bytes, bytes)
+    public view returns (byte, string)
+    {
         Whitelist whitelist = Whitelist(whitelistAddress);
-        if (whitelist.checkPropertyTrue(_to, "kyc")) {
-            return TransferAllowanceResult.Allowed;
+        if (whitelist.checkPropertyTrue(to, "kyc")) {
+            return (0xA1, "Approved");
         } else {
-            return TransferAllowanceResult.NotAllowed;
+            return (0xA6, "Receiver not in whitelist");
         }
     }
 }
@@ -33,6 +42,9 @@ contract KycTokenModuleFactory is Factory {
         KycTokenModule instance = new KycTokenModule(_tokenAddress, _whitelistAddress);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
+        // attach module to token
+        SecurityToken token = SecurityToken(_tokenAddress);
+        token.addModule(instance);
         return instance;
     }
 }

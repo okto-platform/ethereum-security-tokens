@@ -6,7 +6,7 @@ import "../utils/Factory.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "../utils/Bytes32ArrayLib.sol";
 import "../utils/AddressArrayLib.sol";
-import "./SecurityTokenModule.sol";
+import "./TokenModule.sol";
 
 contract ISecurityToken is Pausable {
     // ERC-20
@@ -306,7 +306,7 @@ contract SecurityToken is ISecurityToken {
 
         (code, message, ) = canSend(tranche, operator, from, to, amount, data, operatorData);
 
-        if (code != 0xA0 && code != 0xA1 && code != 0xA2) {
+        if (code != 0xA0 && code != 0xA1 && code != 0xA2 && code != 0xAF) {
             revert(message);
         }
     }
@@ -403,17 +403,17 @@ contract SecurityToken is ISecurityToken {
     {
         require(moduleAddress != address(0), "Module address is required");
 
-        SecurityTokenModule module = SecurityTokenModule(moduleAddress);
-        SecurityTokenModule.Feature[] memory features = module.getFeatures();
+        TokenModule module = TokenModule(moduleAddress);
+        TokenModule.Feature[] memory features = module.getFeatures();
 
         require(features.length > 0, "Token module does not have any feature");
 
         for (uint i = 0; i < features.length; i++) {
-            if (features[i] == SecurityTokenModule.Feature.TransferValidator) {
+            if (features[i] == TokenModule.Feature.TransferValidator) {
                 AddressArrayLib.addIfNotPresent(transferValidators, moduleAddress);
-            } else if (features[i] == SecurityTokenModule.Feature.TransferListener) {
+            } else if (features[i] == TokenModule.Feature.TransferListener) {
                 AddressArrayLib.addIfNotPresent(transferListeners, moduleAddress);
-            } else if (features[i] == SecurityTokenModule.Feature.TranchesManager) {
+            } else if (features[i] == TokenModule.Feature.TranchesManager) {
                 AddressArrayLib.addIfNotPresent(tranchesManagers, moduleAddress);
             }
         }

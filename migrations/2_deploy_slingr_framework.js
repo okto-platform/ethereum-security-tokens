@@ -1,13 +1,10 @@
-const SlingrSecurityTokenFactory = artifacts.require("SlingrSecurityTokenFactory");
+const SecurityTokenFactory = artifacts.require("SecurityTokenFactory");
 const KycTokenModuleFactory = artifacts.require("KycTokenModuleFactory");
-const ReissuanceModuleFactory = artifacts.require("ReissuanceModuleFactory");
-const ExternalTokenOfferingFactory = artifacts.require("ExternalTokenOfferingFactory");
-const TokensHardCapModuleFactory = artifacts.require("TokensHardCapModuleFactory");
-const KycOfferingModuleFactory = artifacts.require("KycOfferingModuleFactory");
+const InvestorsLimitTokenModuleFactory = artifacts.require("InvestorsLimitTokenModuleFactory");
+const SupplyLimitTokenModuleFactory = artifacts.require("SupplyLimitTokenModuleFactory");
+const ForcedTransferTokenModuleFactory = artifacts.require("ForcedTransferTokenModuleFactory");
 const StandardWhitelistFactory = artifacts.require("StandardWhitelistFactory");
 const MultiSigWalletFactory = artifacts.require("MultiSigWalletFactory");
-
-const SecurityTokenFactory = artifacts.require("SecurityTokenFactory");
 
 const AddressArrayLib = artifacts.require("AddressArrayLib");
 const AddressArrayLibTest = artifacts.require("AddressArrayLibTest");
@@ -16,15 +13,6 @@ const Bytes32ArrayLibTest = artifacts.require("Bytes32ArrayLibTest");
 
 
 module.exports = function(deployer) {
-  deployer.deploy(SlingrSecurityTokenFactory);
-  deployer.deploy(KycTokenModuleFactory);
-  deployer.deploy(ReissuanceModuleFactory);
-  deployer.deploy(ExternalTokenOfferingFactory);
-  deployer.deploy(TokensHardCapModuleFactory);
-  deployer.deploy(KycOfferingModuleFactory);
-  deployer.deploy(StandardWhitelistFactory);
-  deployer.deploy(MultiSigWalletFactory);
-
   deployer.deploy(AddressArrayLib);
   deployer.link(AddressArrayLib, AddressArrayLibTest);
   deployer.deploy(AddressArrayLibTest);
@@ -36,4 +24,12 @@ module.exports = function(deployer) {
   deployer.link(Bytes32ArrayLib, SecurityTokenFactory);
   deployer.link(AddressArrayLib, SecurityTokenFactory);
   deployer.deploy(SecurityTokenFactory);
+
+  deployer.deploy(KycTokenModuleFactory);
+  deployer.deploy(InvestorsLimitTokenModuleFactory);
+  deployer.deploy(SupplyLimitTokenModuleFactory);
+  deployer.deploy(ForcedTransferTokenModuleFactory);
+
+  deployer.deploy(StandardWhitelistFactory);
+  deployer.deploy(MultiSigWalletFactory);
 };
