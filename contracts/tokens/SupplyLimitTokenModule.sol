@@ -27,7 +27,7 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     {
         if (from == address(0)) {
             // this is an issuance of tokens
-            SecurityToken token = SecurityToken(token);
+            SecurityToken token = SecurityToken(tokenAddress);
             if ((token.totalSupply() + amount) > limit) {
                 return (0xA8, "Supply limit reached");
             }
