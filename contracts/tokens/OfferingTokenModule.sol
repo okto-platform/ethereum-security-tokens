@@ -2,21 +2,18 @@ pragma solidity ^0.4.24;
 
 import "../utils/Factory.sol";
 import "./TokenModule.sol";
+import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule {
+contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausable {
     uint256 public start;
     uint256 public end;
-    bool public exchangeByEther;
-    uint256 public etherRatio;
 
-    constructor(address _tokenAddress, uint256 _start, uint256 _end, bool _exchangeByEther, uint256 etherRatio)
+    constructor(address _tokenAddress, uint256 _start, uint256 _end)
     TokenModule(_tokenAddress)
     public
     {
         start = _start;
         end = _end;
-        exchangeByEther = _exchangeByEther;
-        etherRatio = _etherRatio;
     }
 
     function getFeatures()
@@ -27,20 +24,60 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule {
         return features;
     }
 
+    function issueTokens(bytes32[] tranches, address[] investors, uint256[] amounts)
+    onlyTokenDefaultOperator whenNotPaused
+    public
+    {
+        require(investors.length == tranches.length && tranches.length == amounts.length, "");
+        require(investors.length > 0, "Tokens for at least one investor should be issued");
+        require(now >= start, "The offering has not started yet");
+        require(now <= end, "The offering has finished already");
 
-    function validateTransfer(bytes32, bytes32, address, address from, address, uint256 amount, bytes, bytes)
+        SecurityToken token = SecurityToken(tokenAddress);
+        for (uint i = 0; i < investors.length; i++) {
+            token.issueByTranche(tranches[i], investors[i], amounts[i], abi.encodePacked("issuing"));
+        }
+    }
+
+    function reserveTokens(bytes32[] tranches, address[] investors, uint256[] amounts)
+    onlyTokenOwner whenNotPaused
+    public
+    {
+        require(investors.length == tranches.length && tranches.length == amounts.length, "Number of investors, tranches and amounts does not match");
+        require(investors.length > 0, "Tokens for at least one investor should be issued");
+
+        SecurityToken token = SecurityToken(tokenAddress);
+        for (uint i = 0; i < investors.length; i++) {
+            token.issueByTranche(tranches[i], investors[i], amounts[i], abi.encodePacked("reservation"));
+        }
+    }
+
+    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256, bytes, bytes operatorData)
     public view returns (byte, string)
     {
-        // TODO we need to only allow issuance if we are between start and end
+        if (from == address(0)) {
+            // if this is a token reservation (only done by the owner of the token) we don't perform this validation
+            if (keccak256(operatorData) != keccak256(abi.encodePacked("reservation"))) {
+                // we need to only allow issuance if we are between start and end
+                if (now < start || now > end) {
+                    return (0xA8, "Offering not in progress");
+                }
+            }
+        } else if (to != address(0)) {
+            // if this is a regular transfer and not issuance, we will reject it if the offering is not finished
+            if (now <= end) {
+                return (0xA8, "Transfers are not allowed until offering is finished");
+            }
+        }
         return (0xA1, "Approved");
     }
 }
 
 contract OfferingTokenModuleFactory is Factory {
-    function createInstance(address _tokenAddress, uint256 _start, uint256 _end, bool _exchangeByEther, uint256 _etherRatio)
+    function createInstance(address _tokenAddress, uint256 _start, uint256 _end)
     public returns(address)
     {
-        OfferingTokenModule instance = new OfferingTokenModule(_tokenAddress, _start, _end, _exchangeByEther, _etherRatio);
+        OfferingTokenModule instance = new OfferingTokenModule(_tokenAddress, _start, _end);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         // attach module to token

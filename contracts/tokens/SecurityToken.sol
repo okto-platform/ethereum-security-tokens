@@ -333,7 +333,7 @@ contract SecurityToken is ISecurityToken {
         require(tokenHolder != address(0), "Cannot issue tokens to address 0x0");
         require(isDefaultOperator(msg.sender), "Only default operators can do this");
 
-        verifyCanSendOrRevert(tranche, msg.sender, address(0), tokenHolder, amount, data, new bytes(0));
+        verifyCanSendOrRevert(tranche, msg.sender, address(0), tokenHolder, amount, new bytes(0), data);
 
         balancesPerTranche[tokenHolder][tranche] = balancesPerTranche[tokenHolder][tranche].add(amount);
         balances[tokenHolder] = balances[tokenHolder].add(amount);
@@ -345,7 +345,7 @@ contract SecurityToken is ISecurityToken {
         emit IssuedByTranche(tranche, tokenHolder, amount, data);
 
         // notify listeners
-        notifyTransfer(bytes32(0), tranche, msg.sender, address(0), tokenHolder, amount, data, new bytes(0));
+        notifyTransfer(bytes32(0), tranche, msg.sender, address(0), tokenHolder, amount, new bytes(0), data);
     }
 
 
