@@ -63,6 +63,10 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
                     return (0xA8, "Offering not in progress");
                 }
             }
+            // if offering is in progress, but it is paused we will return an error
+            if (now >= start && now <= end && paused) {
+                return (0xA8, "Offering is paused");
+            }
         } else if (to != address(0)) {
             // if this is a regular transfer and not issuance, we will reject it if the offering is not finished
             if (now <= end) {

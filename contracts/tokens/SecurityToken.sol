@@ -78,6 +78,7 @@ contract SecurityToken is ISecurityToken {
     mapping(address => mapping(address => bool)) internal operators;
 
     // modules defined for the token
+    address[] internal modules;
     address[] internal transferValidators;
     address[] internal transferListeners;
     address[] internal tranchesManagers;
@@ -331,7 +332,7 @@ contract SecurityToken is ISecurityToken {
     public
     {
         require(tokenHolder != address(0), "Cannot issue tokens to address 0x0");
-        require(isDefaultOperator(msg.sender), "Only default operators can do this");
+        require(isDefaultOperator(msg.sender) || isModule(msg.sender), "Only default operators or module can do this");
 
         verifyCanSendOrRevert(tranche, msg.sender, address(0), tokenHolder, amount, new bytes(0), data);
 
@@ -423,6 +424,8 @@ contract SecurityToken is ISecurityToken {
             }
         }
 
+        AddressArrayLib.addIfNotPresent(modules, moduleAddress);
+
         emit AddedModule(moduleAddress);
     }
 
@@ -433,8 +436,15 @@ contract SecurityToken is ISecurityToken {
         AddressArrayLib.removeValue(transferValidators, moduleAddress);
         AddressArrayLib.removeValue(transferListeners, moduleAddress);
         AddressArrayLib.removeValue(tranchesManagers, moduleAddress);
+        AddressArrayLib.removeValue(modules, moduleAddress);
 
         emit RemovedModule(moduleAddress);
+    }
+
+    function isModule(address moduleAddress)
+    public view returns (bool)
+    {
+        return AddressArrayLib.contains(modules, moduleAddress);
     }
 
     function release()

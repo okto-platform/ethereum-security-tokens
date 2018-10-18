@@ -9,6 +9,7 @@ const KycTokenModuleFactory = artifacts.require("KycTokenModuleFactory");
 const InvestorsLimitTokenModuleFactory = artifacts.require("InvestorsLimitTokenModuleFactory");
 const SupplyLimitTokenModuleFactory = artifacts.require("SupplyLimitTokenModuleFactory");
 const ForcedTransferTokenModuleFactory = artifacts.require("ForcedTransferTokenModuleFactory");
+const OfferingTokenModuleFactory = artifacts.require("OfferingTokenModuleFactory");
 
 const WhitelistFactory = artifacts.require("WhitelistFactory");
 const TypedWhitelistFactory = artifacts.require("TypedWhitelistFactory");
@@ -39,6 +40,7 @@ module.exports = function(deployer) {
   deployer.deploy(InvestorsLimitTokenModuleFactory);
   deployer.deploy(SupplyLimitTokenModuleFactory);
   deployer.deploy(ForcedTransferTokenModuleFactory);
+  deployer.deploy(OfferingTokenModuleFactory);
 
   // Whitelists
 
