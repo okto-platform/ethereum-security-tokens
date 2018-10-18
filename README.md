@@ -4,222 +4,170 @@ Protocol for security token smart contracts for Transfer Agents Powered by SLING
 
 ## Overview
 
-![High level overview](https://github.com/slingr-stack/slingr-security-tokens/blob/master/docs/slingr-tokens.png?raw=true)
+The SLINGR Security Token is a set of smart contracts for the Ethereum blockchain that allow to create tokens that 
+can comply with the regulations that apply for securities. Some of the features are backed inside the token, but most 
+of them are provided via modules. Token modules allow to extend the security token to meet more complex needs that are
+not supported yet.
 
-The `Token` is a ERC-20 compatible contract that holds balances and have the methods to transfer tokens from
-on wallet to another. Additionally the SLINGR Security Token has some additional features:
+![High level overview](https://github.com/slingr-stack/slingr-security-tokens/blob/master/docs/security-tokens-overview.png?raw=true)
 
-- Allow to add/remove modules that can extend the features of a token.
-- Allow to configure a token offering.
-- Hooks to verify transfers by modules. For example it could be a module that checks that the destination wallet is 
-  whitelisted.
-- Minting and burning of tokens that can be used by token offerings or other modules.
-- Checkpoints to know the balance of any token holder or total amount of tokens on specific points in time.
-- Management of permissions through roles.
+The `Security Token` was created following the proposal ERC-1411 (still in draft), but it is important to notice that
+it is not fully compatible with it. Maybe in the future some additional features might be added to make it compatible.
 
-`Module` represents a contract associated to a token that:
+By default (without any module) a token has the following features:
 
-- Provides callbacks for hooks available in the token, like hooks to verify transfers.
-- Can access some special functions in the token's contract in order to provide additional features. For
-  example minting/burning methods are only available to modules.
-- Can provide features to the token. For example, they can provide features like KYC compliance or reissuane 
-  of tokens. 
+- Keeps the tokens ledger, allowing to know the list of investors and how much tokens they have
+- Support for tranches to have tokens with different properties
+- Token operators, meant for transfer agent duties
+- Modules management to add more features to the token
+- Issuing and redemption of tokens
+- Read-only compatible with ERC-20 (does not support transfers using ERC-20 protocol)
 
-`Token Offering` is in charge of minting tokens based on the rules of the token offering. Additionally a token
-offering can have modules to add more features to it, like a hard/soft cap, KYC compliance, etc. This is
-represented by `Token Offering Module`.
+A `Token Module` can implement any of those interfaces (more than one if needed):
 
-`Whitelist` keeps information about addresses and properties they have, like if they have been passed KYC validation,
-country, expiration, etc. This information is used by modules and token offerings to allow or reject operations.
+- `Transfer Validator`: this interface is to validate tokens transfers, including issuance and redemption. The module
+  will be able to approve, reject or forced to approve a specific transaction.
+- `Transfer Listener`: this interface allows the module to listen on-chain to all transfers done in the token.
+- `Tranches Manager`: this interface allows the module to decide how branches will be managed. For example decide
+  the destination branch when sending tokens to another investor.
 
-`Multisig Wallet` is a wallet owned by many wallets (that could be another multisig wallet as well). This is
+Some of the built-in modules are:
+
+- `OfferingTokenModule`: this is an offering module that allows to set a period for an initial offering where tokens
+  will be issued.
+- `KycTokenModuleTokenModule`: verifies that investors passed KYC before being able to receive/buy tokens.
+- `InvestorsLimitTokenModule`: makes sure that the number of investors does not go above a predefined limit.
+- `SupplyLimitTokenModule`: sets a limit to the total supply of tokens.
+- `ForcedTransferTokenModule`: allow the token owner to approve a transaction that otherwise would be invalid.
+
+## Whitelists
+
+Whitelists keep information about addresses and properties they have, like if they have been passed KYC validation,
+country, expiration, etc. This information can be used by modules and token offerings to allow or reject operations.
+
+![High level overview](https://github.com/slingr-stack/slingr-security-tokens/blob/master/docs/whitelists.png?raw=true)
+
+- `Whitelist`: this is a generic whitelist that can stored string, number and boolean properties associated to an
+  Ethereum address.
+- `TypedWhitelist`: enforces data types and supports validations.
+- `StandardWhitelist`: provides some predefined fields for the whitelists, like KYC flag, country, expiration, etc.
+
+In most cases you will want to use the `StandardWhitelist`.
+
+## Multisig Wallets
+
+The multisig wallet is a wallet owned by many wallets (that could be another multisig wallet as well). This is
 important to define security schemes. For example an operation might need to be approved by three different
 departments. In this case, each department would be an owner of the multisig wallet to execute that operation. At
 the same time, the wallet of each department could be a multisig wallet where owners are the people with 
 permissions to approve transactions on behalf of the department.
 
+The multisig wallet in used is the one created by Gnosis. Please go to [Gnosis Multisig Wallet](https://github.com/gnosis/MultiSigWallet) 
+for more information.
+
 ## Creating a token
 
-In order to create a new token you need to use the `SlingrSecurityTokenFatory` contract. It will allow you to
-setup a new token contract.
+The process to create a new token is the following:
 
-This contract will be a in a draft state, which means you can configure the token, but cannot operate (mint,
-make transfers, etc.). During the configuration you will probably perform the following operations:
-
-- *Add modules*: modules affect how the token will be have and what are the features of it. While the token
-  is in draft status, it is possible to add/remove modules. You won't be allowed to do so once the token is
-  released.
-- *Set a token offering*:  token offerings are a special kind of module that will be in charge of the
-  initial minting of tokens.
-- *Change token information*: this is changing name, description, etc.
-
-Once all the configuration has happened, you should release the token by using the method `release` in
-the contract.
+- *Create token*: the token can be created using the `SecurityTokenFactory`. This will create a new token contract
+  in draft status (cannot be operated until it is released).
+- *Add modules*: after the creation of the token, modules should be added to support the features needed by the token.
+  Every module has its own factory (i.e. `KycTokenModuleFactory` for the `KycTokenModule` module) that allows to
+  create a new module contract and will automatically attach it to the token.
+- *Release the token*: once the token is configured as desired, the token should be released. After the token is
+  released no additional modules can be added to the token.
 
 ## Extending tokens
 
-Modules allow you to extend the features in a token. They can:
+If the token has features that are needed but they are not provided by the token, it is possible to create token
+modules to support them. A module token must implement the `TokenModule` interface and implement at least one of
+`TransferValidatorTokenModule`, `TransferListenerTokenModule` or `TranchesManagerTokenModule`.
 
-- Allow/reject transfers
-- Mint tokens
-- Burn tokens
-- Create a checkpoint
-
-With the above operations it is possible to create modules that do different things like:
-
-- Allow/reject transactions based on a whitelist
-- Reissue tokens
-- Set a limit in the percentage of tokens owned by an investor
-
-Token modules will need to follow the `TokenModule` interface:
+Here is the sample of the module to enforce a maximum of investors:
 
 ```
-contract TokenModule is Ownable {
-    enum TransferAllowanceResult {NotAllowed, Allowed, ForceNotAllowed, ForceAllowed}
+contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListenerTokenModule,TokenModule {
+    uint256 public limit;
+    uint256 public numberOfInvestors;
 
-    address tokenAddress;
-
-    modifier onlyTokenOwner()
-    {
-        SlingrSecurityToken token = SlingrSecurityToken(tokenAddress);
-        require(msg.sender == token.owner(), "Only token owner can execute this operation");
-        _;
-    }
-
-    constructor(address _tokenAddress)
+    constructor(address _tokenAddress, uint256 _limit)
+    TokenModule(_tokenAddress)
     public
     {
-        tokenAddress = _tokenAddress;
+        require(_limit > 0, "Limit must be greater than zero");
+
+        limit = _limit;
     }
 
-    function isTransferAllowed(address _from, address _to, uint256 _amount)
-    public returns(TransferAllowanceResult);
+    function getFeatures()
+    public view returns(TokenModule.Feature[])
+    {
+        TokenModule.Feature[] memory features = new TokenModule.Feature[](2);
+        features[0] = TokenModule.Feature.TransferValidator;
+        features[1] = TokenModule.Feature.TransferListener;
+        return features;
+    }
+
+
+    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256 amount, bytes, bytes)
+    public view returns (byte, string)
+    {
+        SecurityToken token = SecurityToken(tokenAddress);
+        if (to != address(0) && token.balanceOf(to) == 0) {
+            // if the sender is transferring all its tokens, then we can assume there will be one investor less
+            uint256 diff = (from != address(0) && token.balanceOf(from) == amount) ? 1 : 0;
+            // this is a new investor so we need to check limit
+            if ((numberOfInvestors - diff) >= limit) {
+                return (0xA8, "Maximum number of investors reached");
+            }
+        }
+        return (0xA1, "Approved");
+    }
+
+    function transferDone(bytes32, bytes32, address, address from, address to, uint256 amount, bytes, bytes)
+    public
+    {
+        SecurityToken token = SecurityToken(tokenAddress);
+        if (to != address(0) && token.balanceOf(to) == amount) {
+            // it means that this is a new investor as all the tokens are the ones that were transferred in this operation
+            numberOfInvestors++;
+        }
+        if (from != address(0) && token.balanceOf(from) == 0) {
+            // decrease the number of investors as the sender does not have any tokens after the transaction
+            numberOfInvestors--;
+        }
+    }
+}
+
+contract InvestorsLimitTokenModuleFactory is Factory {
+    function createInstance(address _tokenAddress, uint256 _limit)
+    public returns(address)
+    {
+        InvestorsLimitTokenModule instance = new InvestorsLimitTokenModule(_tokenAddress, _limit);
+        instance.transferOwnership(msg.sender);
+        addInstance(instance);
+        // attach module to token
+        SecurityToken token = SecurityToken(_tokenAddress);
+        token.addModule(instance);
+        return instance;
+    }
 }
 ```
 
-Additionally we suggest to provide a factory for your token so it is easy to create. You can find
-factory samples in `KycOfferingModuleFactory`.
-
-If the token wants to validate transactions, the method `isTransferAllowed(address, address, uint256)`
-has to be implemented. This method can return:
+As you can see it implements the required `TokenModule` interface and additionally it implements:
  
-- `Allow`: the module allows the transaction, but another module could still not allowed it.
-- `ForceAllow`: the transaction will be allowed immediately and no other module will be evaluated.
-- `NotAllowed`: the module does not allow the transaction, but another module could still force to allow it.
-- `ForceNotAllowed`: the transaction is not allowed and no other moddule will be evaluated.
+- `TransferValidatorTokenModule`: this is to reject transfers that will increase the number of investors above the limit.
+- `TransferListenerTokenModule`: to update the number of investors if needed when a transaction, issuing or redemption
+  is done.
 
-Modules will be called in the same order they were added to the token.
+Some modules that could be created are:
 
-Additionally, the module can call internal methods in the token like `mint` or `burn`. This way
-you could create a module to reissue tokens:
+- Restrictions to transfer tokens between jurisdictions
+- Checkpoint module to keep track of amounts at specific points in time
+- Dividends module to pay dividends to investors in Ether
+- Voting module to allow investors to vote
+- Proxy module to allow investors to define a proxy for voting
 
-```
-function reissueTokens(address _from, address _to)
-public onlyTokenOwner
-{
-    SlingrSecurityToken token = SlingrSecurityToken(tokenAddress);
-    uint256 balance = token.balanceOf(token);
-    token.burn(_from, balance);
-    token.mint(_to, balance);
-    emit TokensReissued(_from, _to, balance);
-}
-```
+## Disclaimer
 
-So basically the module has a public function called `reissueTokens` that uses the internal `mint`
-and `burn` functions in the token.
-
-## Extending token offerings
-
-Token offerings are associated to a token and they perform the initial minting of tokens. All token
-offerings should extend from `TokenOffering`, which provides the following things:
-
-- Set and start and end date for the offering
-- The list of investors and tokens allocated
-- The function `allocateTokens` to allow to allocate tokens for an investor
-- Add modules to control how the offering will be performed
-
-The `TokenOffering` contract is abstract and does not say anything on how investors will get their
-tokens. It could be an external tool to rise the funds and passing the list to a token offering
-contract that extends from `TokenOffering`, or it could be a token offering that accepts payments
-in ETH or any other token.
-
-Similar to what happens with tokens, token offerings can also have modules. They should extend the
-`TokenOfferingModule` contract:
-
-```
-contract TokenOfferingModule is Ownable {
-    enum AllocationAllowanceResult {NotAllowed, Allowed, ForceNotAllowed, ForceAllowed}
-
-    address tokenOfferingAddress;
-
-    event AllocationRejected(string code, string message);
-
-    constructor(address _tokenOfferingAddress)
-    public
-    {
-        tokenOfferingAddress = _tokenOfferingAddress;
-    }
-
-    function allowAllocation(address _to, uint256 _amount)
-    public returns(AllocationAllowanceResult);
-}
-```
-
-Basically modules need to implement the `allowAllocation` module to determine if that allocation
-is valid.
-
-As with token modules, it is recommended that they provide a factory contract, like 
-`TokensHardCapModuleFactory` for example.
-
-## Custom whitelists
-
-A whitelist associates information to an address. This information could be if they passed KYC,
-the country they belong to, or and ID hash of the person. This is useful when security tokens
-need to comply with regulations.
-
-You can see how whitelists are used in `KycOfferingModule` or `KycTokenModule`.
-
-Whitelist will extend the `Whitelist` contract and then in the implementation they should indicate
-which will be the properties hold for each address. This is for example the `StandardWhitelist`:
-
-```
-contract StandardWhitelist is Whitelist {
-    mapping (string => PropertyType) propertiesType;
-
-    constructor()
-    public
-    {
-        propertiesType["kyc"] = PropertyType.Boolean;
-        propertiesType["expiration"] = PropertyType.Number;
-        propertiesType["country"] = PropertyType.String;
-    }
-
-    function isValidValueForProperty(string _property, string)
-    public returns(bool)
-    {
-        return checkPropertyType(_property, PropertyType.String);
-    }
-
-
-    function isValidValueForProperty(string _property, bool)
-    public returns(bool)
-    {
-        return checkPropertyType(_property, PropertyType.Boolean);
-    }
-
-    function isValidValueForProperty(string _property, uint)
-    public returns(bool)
-    {
-        return checkPropertyType(_property, PropertyType.Number);
-    }
-
-    function checkPropertyType(string _property, PropertyType _type)
-    public returns(bool)
-    {
-        PropertyType propertyType = propertiesType[_property];
-        return propertyType == _type;
-    }
-}
-```
-
-In addition it is recommended to have a factory contract, like `StandardWhitelistFactory`.
+This protocol is still in development and should not be used for production tokens yet.
