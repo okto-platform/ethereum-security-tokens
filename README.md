@@ -1,15 +1,15 @@
-# SLINGR Security Tokens
+# OKTO Security Tokens
 
-Protocol for security token smart contracts for Transfer Agents Powered by SLINGR
+Ethereum protocol for security token for Transfer Agents Powered by OKTO
 
 ## Overview
 
-The SLINGR Security Token is a set of smart contracts for the Ethereum blockchain that allow to create tokens that 
+The OKTO Security Token is a set of smart contracts for the Ethereum blockchain that allow to create tokens that 
 can comply with the regulations that apply for securities. Some of the features are backed inside the token, but most 
 of them are provided via modules. Token modules allow to extend the security token to meet more complex needs that are
 not supported yet.
 
-![High level overview](https://github.com/slingr-stack/slingr-security-tokens/blob/master/docs/security-tokens-overview.png?raw=true)
+![High level overview](https://github.com/okto-platform/ethereum-security-tokens/blob/master/docs/security-tokens-overview.png?raw=true)
 
 The `Security Token` was created following the proposal ERC-1411 (still in draft), but it is important to notice that
 it is not fully compatible with it. Maybe in the future some additional features might be added to make it compatible.
@@ -45,7 +45,7 @@ Some of the built-in modules are:
 Whitelists keep information about addresses and properties they have, like if they have been passed KYC validation,
 country, expiration, etc. This information can be used by modules and token offerings to allow or reject operations.
 
-![High level overview](https://github.com/slingr-stack/slingr-security-tokens/blob/master/docs/whitelists.png?raw=true)
+![High level overview](https://github.com/okto-platform/ethereum-security-tokens/blob/master/docs/whitelists.png?raw=true)
 
 - `Whitelist`: this is a generic whitelist that can stored string, number and boolean properties associated to an
   Ethereum address.
