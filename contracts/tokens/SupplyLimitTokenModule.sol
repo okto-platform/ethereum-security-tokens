@@ -7,11 +7,10 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     uint256 public limit;
 
     constructor(address _tokenAddress, uint256 _limit)
-    TokenModule(_tokenAddress)
+    TokenModule(_tokenAddress, "supplyLimit")
     public
     {
         limit = _limit;
-        type = "supplyLimit";
     }
 
     function getFeatures()

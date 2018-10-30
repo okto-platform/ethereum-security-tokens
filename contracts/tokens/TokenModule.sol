@@ -38,7 +38,7 @@ contract TokenModule is Ownable {
     enum Feature {TransferValidator, TransferListener, TranchesManager}
 
     address tokenAddress;
-    string public type;
+    string public moduleType;
 
     modifier onlyToken {
         require(msg.sender == tokenAddress, "Only token can do this");
@@ -57,10 +57,11 @@ contract TokenModule is Ownable {
         _;
     }
 
-    constructor(address _tokenAddress)
+    constructor(address _tokenAddress, string _moduleType)
     public
     {
         tokenAddress = _tokenAddress;
+        moduleType = _moduleType;
     }
 
     function getFeatures() public view returns(Feature[]);

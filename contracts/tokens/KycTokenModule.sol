@@ -8,11 +8,10 @@ contract KycTokenModule is TransferValidatorTokenModule,TokenModule {
     address public whitelistAddress;
 
     constructor(address _tokenAddress, address _whitelistAddress)
-    TokenModule(_tokenAddress)
+    TokenModule(_tokenAddress, "kyc")
     public
     {
         whitelistAddress = _whitelistAddress;
-        type = "kyc";
     }
 
     function getFeatures()

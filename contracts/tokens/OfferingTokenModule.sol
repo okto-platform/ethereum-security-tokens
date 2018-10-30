@@ -9,12 +9,11 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
     uint256 public end;
 
     constructor(address _tokenAddress, uint256 _start, uint256 _end)
-    TokenModule(_tokenAddress)
+    TokenModule(_tokenAddress, "offering")
     public
     {
         start = _start;
         end = _end;
-        type = "offering";
     }
 
     function getFeatures()

@@ -8,13 +8,12 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
     uint256 public numberOfInvestors;
 
     constructor(address _tokenAddress, uint256 _limit)
-    TokenModule(_tokenAddress)
+    TokenModule(_tokenAddress, "investorsLimit")
     public
     {
         require(_limit > 0, "Limit must be greater than zero");
 
         limit = _limit;
-        type = "investorsLimit";
     }
 
     function getFeatures()

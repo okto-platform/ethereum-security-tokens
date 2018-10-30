@@ -18,10 +18,9 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
     uint256 numberOfPendingTransfers;
 
     constructor(address _tokenAddress)
-    TokenModule(_tokenAddress)
+    TokenModule(_tokenAddress, "forcedTransfer")
     public
     {
-        type = "forcedTransfer";
     }
 
     function getFeatures()
