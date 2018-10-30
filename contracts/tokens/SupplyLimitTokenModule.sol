@@ -11,6 +11,7 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     public
     {
         limit = _limit;
+        type = "supplyLimit";
     }
 
     function getFeatures()

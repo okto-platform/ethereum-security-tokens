@@ -14,6 +14,7 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
         require(_limit > 0, "Limit must be greater than zero");
 
         limit = _limit;
+        type = "investorsLimit";
     }
 
     function getFeatures()

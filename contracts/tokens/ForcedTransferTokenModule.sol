@@ -21,6 +21,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
     TokenModule(_tokenAddress)
     public
     {
+        type = "forcedTransfer";
     }
 
     function getFeatures()

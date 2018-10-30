@@ -38,6 +38,7 @@ contract TokenModule is Ownable {
     enum Feature {TransferValidator, TransferListener, TranchesManager}
 
     address tokenAddress;
+    string public type;
 
     modifier onlyToken {
         require(msg.sender == tokenAddress, "Only token can do this");

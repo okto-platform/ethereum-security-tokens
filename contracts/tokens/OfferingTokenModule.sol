@@ -14,6 +14,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
     {
         start = _start;
         end = _end;
+        type = "offering";
     }
 
     function getFeatures()
