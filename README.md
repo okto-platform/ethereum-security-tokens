@@ -174,11 +174,11 @@ These are the current contract addresses of the factories on Ropsten:
 
 ```
 SecurityTokenFactory                 => 0x68738a62d433c9f24813fecdc915b031f5612137
-KycTokenModuleFactory                => 0x40a94b2d7bae22741abd4a07a9d9baef879512e7
-InvestorsLimitTokenModuleFactory     => 0x138ab03e89c32df57ceee007627dcba1672cb87d
-SupplyLimitTokenModuleFactory        => 0xa30d762f86ffabb9d47978013b9f0e143a12896c
-ForcedTransferTokenModuleFactory     => 0xeb5450fca6536f2eb671a15544d7e0f031a87119
-OfferingTokenModuleFactory           => 0x50ab9bd2f3fd4219f103e5722558be7ab732b224
+KycTokenModuleFactory                => 0xb6bc89db5c29d6448b65ee727dedeaf8be426bae
+InvestorsLimitTokenModuleFactory     => 0x8a285a4e09fa0a45cfd202e1b1461c11a3c0dfdd
+SupplyLimitTokenModuleFactory        => 0xfd38eaa6e0c4f2221ab8b2a12baad37a95fe00ef
+ForcedTransferTokenModuleFactory     => 0x9a561e2d40859da82258efb2129ef66bb59b1821
+OfferingTokenModuleFactory           => 0x519821abc20656ab49551e1be19e3c13fa380a75
 WhitelistFactory                     => 0x608f431a7b7c25697782802566a687cc555416f4
 TypedWhitelistFactory                => 0x9ebcc02e381263933eeb375fcfa989ebe801b36b
 StandardWhitelistFactory             => 0xad5408ee9889c8b4920190d3743b97d5ddbdae32
