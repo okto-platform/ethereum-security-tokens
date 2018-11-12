@@ -32,10 +32,16 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         require(investors.length > 0, "Tokens for at least one investor should be issued");
         require(now >= start, "The offering has not started yet");
         require(now <= end, "The offering has finished already");
-
+        byte res;
+        string memory message;
         SecurityToken token = SecurityToken(tokenAddress);
         for (uint i = 0; i < investors.length; i++) {
-            token.issueByTranche(tranches[i], investors[i], amounts[i], abi.encodePacked("issuing"));
+            (res, message, ) = token.canSend(tranches[i], msg.sender, address(0), investors[i], amounts[i], new bytes(0), abi.encodePacked("issuing"));
+            if (res != 0xA0 && res != 0xA1 && res != 0xA2 && res != 0xAF) {
+                emit TokenAllocationError(i, res, message);
+            } else {
+                token.issueByTranche(tranches[i], investors[i], amounts[i], abi.encodePacked("issuing"));
+            }
         }
     }
 
@@ -46,9 +52,16 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         require(investors.length == tranches.length && tranches.length == amounts.length, "Number of investors, tranches and amounts does not match");
         require(investors.length > 0, "Tokens for at least one investor should be issued");
 
+        byte res;
+        string memory message;
         SecurityToken token = SecurityToken(tokenAddress);
         for (uint i = 0; i < investors.length; i++) {
-            token.issueByTranche(tranches[i], investors[i], amounts[i], abi.encodePacked("reservation"));
+            (res, message, ) = token.canSend(tranches[i], msg.sender, address(0), investors[i], amounts[i], new bytes(0), abi.encodePacked("reservation"));
+            if (res != 0xA0 && res != 0xA1 && res != 0xA2 && res != 0xAF) {
+                emit TokenAllocationError(i, res, message);
+            } else {
+                token.issueByTranche(tranches[i], investors[i], amounts[i], abi.encodePacked("reservation"));
+            }
         }
     }
 
@@ -75,6 +88,8 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         }
         return (0xA1, "Approved");
     }
+
+    event TokenAllocationError(uint256 index, byte code, string errorMessage);
 }
 
 contract OfferingTokenModuleFactory is Factory {

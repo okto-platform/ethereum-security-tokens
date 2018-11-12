@@ -4,6 +4,7 @@ const SecurityTokenFactory = artifacts.require("SecurityTokenFactory");
 const SecurityToken = artifacts.require("SecurityToken");
 const OfferingTokenModuleFactory = artifacts.require("OfferingTokenModuleFactory");
 const OfferingTokenModule = artifacts.require("OfferingTokenModule");
+const SupplyLimitTokenModuleFactory = artifacts.require("SupplyLimitTokenModuleFactory");
 
 let padBytes32 = function(value) {
     return value.padEnd(66, '0');
@@ -42,6 +43,8 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
     let investor1 = accounts[3];
     let investor2 = accounts[4];
     let investor3 = accounts[5];
+    let investor4 = accounts[8];
+    let investor5 = accounts[9];
     let companyWallet = accounts[6];
     let employeesWallet = accounts[7];
 
@@ -65,6 +68,10 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
         await moduleFactory.createInstance(tokenAddress, start, end, {from: owner});
         let modulesCount = await moduleFactory.getInstancesCount.call();
         moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
+
+        // the limit module is to test error handling when issuing tokens
+        let limitModuleFactory = await SupplyLimitTokenModuleFactory.deployed();
+        await limitModuleFactory.createInstance(tokenAddress, 1000000, {from: owner});
 
         let token = SecurityToken.at(tokenAddress);
         await token.release({from: owner});
@@ -122,6 +129,31 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
         assert.equal(balance, 500, "Investor 1 balance is incorrect");
         balance = await token.balanceOfByTranche.call(trancheUnrestricted, investor2);
         assert.equal(balance, 1000, "Investor 2 balance is incorrect");
+    });
+
+
+    it('verify error handling', async() => {
+        let token = SecurityToken.at(tokenAddress);
+        let module = OfferingTokenModule.at(moduleAddress);
+
+        let result = await module.issueTokens(
+            [trancheUnrestricted, trancheUnrestricted, trancheUnrestricted],
+            [investor3, investor4, investor5],
+            [500, 4000000, 2000000],
+            {from: operator1}
+        );
+        let balance = await token.balanceOfByTranche.call(trancheUnrestricted, investor3);
+        assert.equal(balance, 500, "Investor 3 balance is incorrect");
+        balance = await token.balanceOfByTranche.call(trancheUnrestricted, investor4);
+        assert.equal(balance.valueOf(), 0, "Investor 4 balance is incorrect");
+        balance = await token.balanceOfByTranche.call(trancheUnrestricted, investor5);
+        assert.equal(balance.valueOf(), 0, "Investor 5 balance is incorrect");
+        truffleAssert.eventEmitted(result, 'TokenAllocationError', function(ev) {
+            return ev.index == '1' && ev.code == '0xa8' && ev.errorMessage == 'Supply limit reached';
+        });
+        truffleAssert.eventEmitted(result, 'TokenAllocationError', function(ev) {
+            return ev.index == '2' && ev.code == '0xa8' && ev.errorMessage == 'Supply limit reached';
+        });
     });
 
 
