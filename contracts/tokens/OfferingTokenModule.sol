@@ -28,7 +28,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
     onlyTokenDefaultOperator whenNotPaused
     public
     {
-        require(investors.length == tranches.length && tranches.length == amounts.length, "");
+        require(investors.length == tranches.length && tranches.length == amounts.length, "Number of investors, tranches and amounts does not match");
         require(investors.length > 0, "Tokens for at least one investor should be issued");
         require(now >= start, "The offering has not started yet");
         require(now <= end, "The offering has finished already");
@@ -51,7 +51,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
     {
         require(investors.length == tranches.length && tranches.length == amounts.length, "Number of investors, tranches and amounts does not match");
         require(investors.length > 0, "Tokens for at least one investor should be issued");
-
+        require(now < start, "The offering has started already");
         byte res;
         string memory message;
         SecurityToken token = SecurityToken(tokenAddress);
