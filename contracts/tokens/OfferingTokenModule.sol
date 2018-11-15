@@ -65,7 +65,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         }
     }
 
-    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256, bytes, bytes operatorData)
+    function validateTransfer(bytes32, bytes32, address, address from, address, uint256, bytes, bytes operatorData)
     public view returns (byte, string)
     {
         if (from == address(0)) {
@@ -74,13 +74,17 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
                 // we need to only allow issuance if we are between start and end
                 if (now < start || now > end) {
                     return (0xA8, "Offering not in progress");
+                } else if (paused) {
+                    // if offering is in progress, but it is paused we will return an error
+                    return (0xA8, "Offering is paused");
+                }
+            } else {
+                // if it is a reservation, but it is after the offering started, return an error
+                if (now >= start) {
+                    return (0xA8, "Offering already started");
                 }
             }
-            // if offering is in progress, but it is paused we will return an error
-            if (now >= start && now <= end && paused) {
-                return (0xA8, "Offering is paused");
-            }
-        } else if (to != address(0)) {
+        } else {
             // if this is a regular transfer and not issuance, we will reject it if the offering is not finished
             if (now <= end) {
                 return (0xA8, "Transfers are not allowed until offering is finished");

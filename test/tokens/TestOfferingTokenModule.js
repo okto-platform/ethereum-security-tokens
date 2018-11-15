@@ -132,6 +132,14 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
     });
 
 
+    it('cannot reserve tokens once the offering is started', async() => {
+        let token = SecurityToken.at(tokenAddress);
+        let module = OfferingTokenModule.at(moduleAddress);
+
+        await truffleAssert.reverts(module.reserveTokens([trancheUnrestricted], [investor1], [1000], {from: owner}));
+    });
+
+
     it('verify error handling', async() => {
         let token = SecurityToken.at(tokenAddress);
         let module = OfferingTokenModule.at(moduleAddress);
