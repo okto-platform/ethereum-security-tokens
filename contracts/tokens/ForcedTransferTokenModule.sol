@@ -1,6 +1,5 @@
 pragma solidity ^0.4.24;
 
-import "../whitelists/Whitelist.sol";
 import "../utils/Factory.sol";
 import "./TokenModule.sol";
 
@@ -52,7 +51,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
             pendingForceTransfers[hash].amount = amount;
             numberOfPendingTransfers++;
         }
-        emit ApprovedForcedTransfer(fromTranche, toTranche, operator, from, to, amount);
+        emit ApprovedForcedTransfer(fromTranche, toTranche, operator, from, to, amount, hash);
     }
 
     function revokeForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount)
@@ -71,7 +70,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
             numberOfPendingTransfers--;
         }
 
-        emit RevokedForcedTransfer(fromTranche, toTranche, operator, from, to, amount);
+        emit RevokedForcedTransfer(fromTranche, toTranche, operator, from, to, amount, hash);
     }
 
     function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes, bytes)
@@ -105,8 +104,8 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
         }
     }
 
-    event ApprovedForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address to, uint256 amount);
-    event RevokedForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address to, uint256 amount);
+    event ApprovedForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address to, uint256 amount, bytes32 hash);
+    event RevokedForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address to, uint256 amount, bytes32 hash);
 }
 
 contract ForcedTransferTokenModuleFactory is Factory {
