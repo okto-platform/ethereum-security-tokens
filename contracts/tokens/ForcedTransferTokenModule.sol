@@ -99,6 +99,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
         bytes memory hashBytes = abi.encodePacked(fromTranche, toTranche, operator, from, to, amount);
         bytes32 hash = keccak256(hashBytes);
         if (pendingForceTransfers[hash].from != address(0)) {
+            emit ExecutedForcedTransfer(fromTranche, toTranche, operator, from, to, amount, hash);
             delete pendingForceTransfers[hash];
             numberOfPendingTransfers--;
         }
@@ -106,6 +107,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
 
     event ApprovedForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address to, uint256 amount, bytes32 hash);
     event RevokedForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address to, uint256 amount, bytes32 hash);
+    event ExecutedForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address indexed operator, address indexed from, address to, uint256 amount, bytes32 hash);
 }
 
 contract ForcedTransferTokenModuleFactory is Factory {
