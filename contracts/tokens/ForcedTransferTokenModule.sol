@@ -50,8 +50,8 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
             pendingForceTransfers[hash].to = to;
             pendingForceTransfers[hash].amount = amount;
             numberOfPendingTransfers++;
+            emit ApprovedForcedTransfer(fromTranche, toTranche, operator, from, to, amount, hash);
         }
-        emit ApprovedForcedTransfer(fromTranche, toTranche, operator, from, to, amount, hash);
     }
 
     function revokeForcedTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount)
@@ -68,9 +68,8 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
         if (pendingForceTransfers[hash].from != address(0)) {
             delete pendingForceTransfers[hash];
             numberOfPendingTransfers--;
+            emit RevokedForcedTransfer(fromTranche, toTranche, operator, from, to, amount, hash);
         }
-
-        emit RevokedForcedTransfer(fromTranche, toTranche, operator, from, to, amount, hash);
     }
 
     function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes, bytes)
