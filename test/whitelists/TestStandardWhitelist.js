@@ -69,4 +69,17 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
         await truffleAssert.reverts(whitelist.setNumber(accounts[1], propExpiration, 100, {from: accounts[2]}));
     });
+
+
+    it('only owner can add properties', async() => {
+        let factory = await StandardWhitelistFactory.deployed();
+        await factory.createInstance([validator], [], [], {from: owner});
+        let whitelistsCount = await factory.getInstancesCount.call();
+        let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
+        let whitelist = await StandardWhitelist.at(whitelistAddress);
+
+        await whitelist.addProperty('0x30', 3, {from: owner});
+        await truffleAssert.reverts(whitelist.addProperty('0x31', 1, {from: validator}));
+        await truffleAssert.reverts(whitelist.addProperty('0x01', 1, {from: owner}));
+    });
 });
