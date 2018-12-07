@@ -10,6 +10,8 @@ import "./TypedWhitelist.sol";
 // 0x01 - bool - KYC flag
 // 0x02 - string - Country code (two letters lower case)
 // 0x03 - uint - Expiration timestamp
+// 0x04 - bool - Accredited investor
+// 0x05 - bool - Insider
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -23,6 +25,8 @@ contract StandardWhitelist is TypedWhitelist {
         propertiesType[0x01] = TypedWhitelist.PropertyType.Boolean;
         propertiesType[0x02] = TypedWhitelist.PropertyType.String;
         propertiesType[0x03] = TypedWhitelist.PropertyType.Number;
+        propertiesType[0x04] = TypedWhitelist.PropertyType.Boolean;
+        propertiesType[0x05] = TypedWhitelist.PropertyType.Boolean;
     }
 }
 
