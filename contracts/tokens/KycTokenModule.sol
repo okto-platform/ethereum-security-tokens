@@ -27,7 +27,7 @@ contract KycTokenModule is TransferValidatorTokenModule,TokenModule {
     public view returns (byte, string)
     {
         Whitelist whitelist = Whitelist(whitelistAddress);
-        if (whitelist.getBool(to, 0x01)) {
+        if (whitelist.getProp(to, 0x01) == 1) {
             return (0xA1, "Approved");
         } else {
             return (0xA6, "Receiver not in whitelist");
