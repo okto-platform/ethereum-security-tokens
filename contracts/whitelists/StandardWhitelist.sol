@@ -7,12 +7,12 @@ import "./Whitelist.sol";
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Standard properties codes:
 //
-// 0x01 KYC flag                           index   0, length   1 bits
-// 0x02 KYC expiration timestamp           index   1, length  40 bits
-// 0x03 Country code (two letters code)    index  41, length  16 bits
-// 0x04 Accredited investor                index  57, length   1 bits
-// 0x05 Insider                            index  58, length   1 bits
-// 0x06 Lockup expiration                  index  59, length  40 bits
+// KYC flag                           index   0, length   1 bits
+// KYC expiration timestamp           index   1, length  40 bits
+// Country code (two letters code)    index  41, length  16 bits
+// Accredited investor                index  57, length   1 bits
+// Insider                            index  58, length   1 bits
+// Lockup expiration                  index  59, length  40 bits
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,27 +30,27 @@ contract StandardWhitelist is Whitelist {
         propertiesDefinition[kyc].len = 1;
 
         bytes32 kycExpiration = bytes32("kycExpiration");
-        propertiesDefinition[kycExpiration].code = 0x02;
+        propertiesDefinition[kycExpiration].code = kycExpiration;
         propertiesDefinition[kycExpiration].from = 1;
         propertiesDefinition[kycExpiration].len = 40;
 
         bytes32 country = bytes32("country");
-        propertiesDefinition[country].code = 0x03;
+        propertiesDefinition[country].code = country;
         propertiesDefinition[country].from = 41;
         propertiesDefinition[country].len = 16;
 
         bytes32 accredited = bytes32("accredited");
-        propertiesDefinition[accredited].code = 0x04;
+        propertiesDefinition[accredited].code = accredited;
         propertiesDefinition[accredited].from = 57;
         propertiesDefinition[accredited].len = 1;
 
         bytes32 insider = bytes32("insider");
-        propertiesDefinition[insider].code = 0x05;
+        propertiesDefinition[insider].code = insider;
         propertiesDefinition[insider].from = 58;
         propertiesDefinition[insider].len = 1;
 
         bytes32 lockupExpiration = bytes32("lockupExpiration");
-        propertiesDefinition[lockupExpiration].code = 0x06;
+        propertiesDefinition[lockupExpiration].code = lockupExpiration;
         propertiesDefinition[lockupExpiration].from = 59;
         propertiesDefinition[lockupExpiration].len = 40;
     }

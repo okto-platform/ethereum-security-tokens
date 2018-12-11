@@ -3,11 +3,9 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../utils/Factory.sol";
 import "../utils/AddressArrayLib.sol";
-import "../utils/BitsLib.sol";
 
 contract Whitelist is Ownable {
     using AddressArrayLib for address[];
-    using BitsLib for uint256;
 
     struct Property {
         bytes32 code;
@@ -86,14 +84,17 @@ contract Whitelist is Ownable {
     {
         require(propertiesDefinition[prop].code != bytes32(0), "Property not defined");
 
-        return properties[investor].bits(propertiesDefinition[prop].from, propertiesDefinition[prop].len);
+        uint256 props = properties[investor];
+        props <<= propertiesDefinition[prop].from;
+        props >>= 256 - propertiesDefinition[prop].len;
+        return props;
     }
 
-    function addProperty(byte prop, uint8 from, uint8 len)
+    function addProperty(bytes32 prop, uint8 from, uint8 len)
     onlyOwner
     public
     {
-        require(propertiesDefinition[prop].code == 0, "Property already defined");
+        require(propertiesDefinition[prop].code == bytes32(0), "Property already defined");
 
         propertiesDefinition[prop].code = prop;
         propertiesDefinition[prop].from = from;
@@ -104,7 +105,7 @@ contract Whitelist is Ownable {
 
     event AddedValidator(address validator);
     event RemovedValidator(address validator);
-    event AddedProperty(byte prop, uint8 from, uint8 len);
+    event AddedProperty(bytes32 prop, uint8 from, uint8 len);
 }
 
 contract WhitelistFactory is Factory {
