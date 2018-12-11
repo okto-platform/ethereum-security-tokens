@@ -7,6 +7,8 @@ import "./TokenModule.sol";
 contract KycTokenModule is TransferValidatorTokenModule,TokenModule {
     address public whitelistAddress;
 
+    bytes32 constant KYC_PROP = bytes32("kyc");
+
     constructor(address _tokenAddress, address _whitelistAddress)
     TokenModule(_tokenAddress, "kyc")
     public
@@ -27,7 +29,7 @@ contract KycTokenModule is TransferValidatorTokenModule,TokenModule {
     public view returns (byte, string)
     {
         Whitelist whitelist = Whitelist(whitelistAddress);
-        if (whitelist.getProp(to, 0x01) == 1) {
+        if (whitelist.getProp(to, KYC_PROP) == 1) {
             return (0xA1, "Approved");
         } else {
             return (0xA6, "Receiver not in whitelist");
