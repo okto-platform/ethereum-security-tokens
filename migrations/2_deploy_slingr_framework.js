@@ -2,6 +2,7 @@ const AddressArrayLib = artifacts.require("AddressArrayLib");
 const AddressArrayLibTest = artifacts.require("AddressArrayLibTest");
 const Bytes32ArrayLib = artifacts.require("Bytes32ArrayLib");
 const Bytes32ArrayLibTest = artifacts.require("Bytes32ArrayLibTest");
+const BitsLib = artifacts.require("BitsLib");
 
 const SecurityTokenFactory = artifacts.require("SecurityTokenFactory");
 
@@ -28,6 +29,8 @@ module.exports = function(deployer) {
   deployer.link(Bytes32ArrayLib, Bytes32ArrayLibTest);
   deployer.deploy(Bytes32ArrayLibTest);
 
+  deployer.deploy(BitsLib);
+
   // Security token
 
   deployer.link(Bytes32ArrayLib, SecurityTokenFactory);
@@ -45,10 +48,10 @@ module.exports = function(deployer) {
   // Whitelists
 
   deployer.link(AddressArrayLib, WhitelistFactory);
+  deployer.link(BitsLib, WhitelistFactory);
   deployer.deploy(WhitelistFactory);
-  deployer.link(AddressArrayLib, TypedWhitelistFactory);
-  deployer.deploy(TypedWhitelistFactory);
   deployer.link(AddressArrayLib, StandardWhitelistFactory);
+  deployer.link(BitsLib, StandardWhitelistFactory);
   deployer.deploy(StandardWhitelistFactory);
 
   // Wallets

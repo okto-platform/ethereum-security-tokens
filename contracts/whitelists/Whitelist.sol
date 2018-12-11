@@ -3,22 +3,21 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../utils/Factory.sol";
 import "../utils/AddressArrayLib.sol";
-import "../utils/Bits.sol";
+import "../utils/BitsLib.sol";
 
 contract Whitelist is Ownable {
     using AddressArrayLib for address[];
-    using Bits for uint256;
+    using BitsLib for uint256;
 
     struct Property {
-        byte code;
+        bytes32 code;
         uint8 from;
         uint8 len;
-        string name;
     }
 
     address[] public validators;
     mapping(address => uint256) properties;
-    mapping(byte => Property) propertiesDefinition;
+    mapping(bytes32 => Property) propertiesDefinition;
 
 
     modifier onlyValidator {
@@ -26,10 +25,9 @@ contract Whitelist is Ownable {
         _;
     }
 
-    constructor(address[] _validators, byte[] props, string[] names, uint8[] froms, uint8[] lens)
+    constructor(address[] _validators, bytes32[] props, uint8[] froms, uint8[] lens)
     public
     {
-        require(props.length == names.length, "Different number of properties and names");
         require(props.length == froms.length, "Different number of properties and indexes");
         require(props.length == lens.length, "Different number of properties and lengths");
 
@@ -39,7 +37,6 @@ contract Whitelist is Ownable {
             propertiesDefinition[props[i]].code = props[i];
             propertiesDefinition[props[i]].from = froms[i];
             propertiesDefinition[props[i]].len = lens[i];
-            propertiesDefinition[props[i]].name = names[i];
         }
     }
 
@@ -84,37 +81,37 @@ contract Whitelist is Ownable {
         return properties[investor];
     }
 
-    function getProp(address investor, byte prop)
+    function getProp(address investor, bytes32 prop)
     public view returns(uint256)
     {
-        require(propertiesDefinition[prop].code != 0, "Property not defined");
+        require(propertiesDefinition[prop].code != bytes32(0), "Property not defined");
 
         return properties[investor].bits(propertiesDefinition[prop].from, propertiesDefinition[prop].len);
     }
 
-    function addProperty(byte prop, string name, uint8 from, uint8 len)
+    function addProperty(byte prop, uint8 from, uint8 len)
     onlyOwner
+    public
     {
         require(propertiesDefinition[prop].code == 0, "Property already defined");
 
         propertiesDefinition[prop].code = prop;
         propertiesDefinition[prop].from = from;
         propertiesDefinition[prop].len = len;
-        propertiesDefinition[prop].name = name;
 
-        emit AddedProperty(prop, name, from, len);
+        emit AddedProperty(prop, from, len);
     }
 
     event AddedValidator(address validator);
     event RemovedValidator(address validator);
-    event AddedProperty(byte prop, string name, uint8 from, uint8 len);
+    event AddedProperty(byte prop, uint8 from, uint8 len);
 }
 
 contract WhitelistFactory is Factory {
-    function createInstance(address[] validators, byte[] props, string[] names, uint8[] froms, uint8[] lens)
+    function createInstance(address[] validators, bytes32[] props, uint8[] froms, uint8[] lens)
     public returns(address)
     {
-        Whitelist instance = new Whitelist(validators, props, names, froms, lens);
+        Whitelist instance = new Whitelist(validators, props, froms, lens);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         return instance;

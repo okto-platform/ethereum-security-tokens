@@ -18,49 +18,49 @@ import "./Whitelist.sol";
 
 contract StandardWhitelist is Whitelist {
     constructor(address[] validators, bytes32[] props, uint8[] froms, uint8[] lens)
-    Whitelist(validators, props, names, froms, lens)
+    Whitelist(validators, props, froms, lens)
     public
     {
         // define this standard properties; if they were also passed in the constructor
         // they will be overridden
 
-        propertiesDefinition[0x01].code = 0x01;
-        propertiesDefinition[0x01].name = 'kyc';
-        propertiesDefinition[0x01].from = 0;
-        propertiesDefinition[0x01].len = 1;
+        bytes32 kyc = bytes32("kyc");
+        propertiesDefinition[kyc].code = kyc;
+        propertiesDefinition[kyc].from = 0;
+        propertiesDefinition[kyc].len = 1;
 
-        propertiesDefinition[0x02].code = 0x02;
-        propertiesDefinition[0x02].name = 'kycExpiration';
-        propertiesDefinition[0x02].from = 1;
-        propertiesDefinition[0x02].len = 40;
+        bytes32 kycExpiration = bytes32("kycExpiration");
+        propertiesDefinition[kycExpiration].code = 0x02;
+        propertiesDefinition[kycExpiration].from = 1;
+        propertiesDefinition[kycExpiration].len = 40;
 
-        propertiesDefinition[0x03].code = 0x03;
-        propertiesDefinition[0x03].name = 'country';
-        propertiesDefinition[0x03].from = 41;
-        propertiesDefinition[0x03].len = 16;
+        bytes32 country = bytes32("country");
+        propertiesDefinition[country].code = 0x03;
+        propertiesDefinition[country].from = 41;
+        propertiesDefinition[country].len = 16;
 
-        propertiesDefinition[0x04].code = 0x04;
-        propertiesDefinition[0x04].name = 'accredited';
-        propertiesDefinition[0x04].from = 57;
-        propertiesDefinition[0x04].len = 1;
+        bytes32 accredited = bytes32("accredited");
+        propertiesDefinition[accredited].code = 0x04;
+        propertiesDefinition[accredited].from = 57;
+        propertiesDefinition[accredited].len = 1;
 
-        propertiesDefinition[0x05].code = 0x05;
-        propertiesDefinition[0x05].name = 'insider';
-        propertiesDefinition[0x05].from = 58;
-        propertiesDefinition[0x05].len = 1;
+        bytes32 insider = bytes32("insider");
+        propertiesDefinition[insider].code = 0x05;
+        propertiesDefinition[insider].from = 58;
+        propertiesDefinition[insider].len = 1;
 
-        propertiesDefinition[0x06].code = 0x06;
-        propertiesDefinition[0x06].name = 'lockupExpiration';
-        propertiesDefinition[0x06].from = 59;
-        propertiesDefinition[0x06].len = 40;
+        bytes32 lockupExpiration = bytes32("lockupExpiration");
+        propertiesDefinition[lockupExpiration].code = 0x06;
+        propertiesDefinition[lockupExpiration].from = 59;
+        propertiesDefinition[lockupExpiration].len = 40;
     }
 }
 
 contract StandardWhitelistFactory is Factory {
-    function createInstance(address[] validators, byte[] props, string[] names, uint8[] froms, uint8[] lens)
+    function createInstance(address[] validators, bytes32[] props, uint8[] froms, uint8[] lens)
     public returns(address)
     {
-        StandardWhitelist instance = new StandardWhitelist(validators, props, names, froms, lens);
+        StandardWhitelist instance = new StandardWhitelist(validators, props, froms, lens);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         return instance;

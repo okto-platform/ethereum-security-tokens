@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-library Bits {
+library BitsLib {
 
     uint constant internal ONE = uint(1);
     uint constant internal ONES = uint(~0);

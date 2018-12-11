@@ -3,18 +3,21 @@ const truffleAssert = require('truffle-assertions');
 const StandardWhitelistFactory = artifacts.require("StandardWhitelistFactory");
 const StandardWhitelist = artifacts.require("StandardWhitelist");
 
+let padBytes32 = function(value) {
+    return value.padEnd(66, '0');
+};
 
 contract('StandardWhitelistFactory', async(accounts) => {
     let owner = accounts[0];
     let validator = accounts[9];
 
-    let propKyc         = '0x01';
-    let propCountry     = '0x02';
-    let propExpiration  = '0x03';
+    let propKyc         = padBytes32(web3.fromUtf8('kyc'));
+    let propCountry     = padBytes32(web3.fromUtf8('country'));
+    let propExpiration  = padBytes32(web3.fromUtf8('kycExpiration'));
 
     it('setting and checking string properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
