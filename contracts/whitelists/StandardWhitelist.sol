@@ -13,6 +13,7 @@ import "./Whitelist.sol";
 // Accredited investor                index  57, length   1 bits
 // Insider                            index  58, length   1 bits
 // Lockup expiration                  index  59, length  40 bits
+// Investor ID                        index  99, length  24 bits
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,6 +54,11 @@ contract StandardWhitelist is Whitelist {
         propertiesDefinition[lockupExpiration].code = lockupExpiration;
         propertiesDefinition[lockupExpiration].from = 59;
         propertiesDefinition[lockupExpiration].len = 40;
+
+        bytes32 investorId = bytes32("investorId");
+        propertiesDefinition[lockupExpiration].code = investorId;
+        propertiesDefinition[lockupExpiration].from = 99;
+        propertiesDefinition[lockupExpiration].len = 24;
     }
 }
 

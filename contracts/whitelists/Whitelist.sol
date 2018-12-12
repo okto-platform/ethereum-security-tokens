@@ -71,6 +71,21 @@ contract Whitelist is Ownable {
     public
     {
         properties[investor] = props;
+
+        emit UpdatedInvestor(investor, props);
+    }
+
+    function setManyProps(address[] investors, uint256[] props)
+    onlyValidator
+    public
+    {
+        require(investors.length == props.length, "Number of investors and number of props does not match");
+
+        for (uint i = 0; i < investors.length; i++) {
+            properties[investors[i]] = props[i];
+
+            emit UpdatedInvestor(investors[i], props[i]);
+        }
     }
 
     function getProps(address investor)
@@ -106,6 +121,7 @@ contract Whitelist is Ownable {
     event AddedValidator(address validator);
     event RemovedValidator(address validator);
     event AddedProperty(bytes32 prop, uint8 from, uint8 len);
+    event UpdatedInvestor(address investor, bytes32 props);
 }
 
 contract WhitelistFactory is Factory {
