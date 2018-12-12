@@ -47,9 +47,9 @@ country, expiration, etc. This information can be used by modules and token offe
 
 ![High level overview](https://github.com/okto-platform/ethereum-security-tokens/blob/master/docs/whitelists.png?raw=true)
 
-- `Whitelist`: this is a generic whitelist that can stored string, number and boolean properties associated to an
-  Ethereum address.
-- `TypedWhitelist`: enforces data types and supports validations.
+- `Whitelist`: this is a generic whitelist that information in a `unit256` field per each address. That means you
+  have 256 bits to store information associated to any address with tools to define the properties and boundaries
+  in bits for each one.
 - `StandardWhitelist`: provides some predefined fields for the whitelists, like KYC flag, country, expiration, etc.
 
 In most cases you will want to use the `StandardWhitelist`.
@@ -174,14 +174,13 @@ These are the current contract addresses of the factories on Ropsten:
 
 ```
 SecurityTokenFactory                 => 0x68738a62d433c9f24813fecdc915b031f5612137
-KycTokenModuleFactory                => 0xb6bc89db5c29d6448b65ee727dedeaf8be426bae
+KycTokenModuleFactory                => 0x7a74640be622183164cf516c544eeebe64b4fc1d
 InvestorsLimitTokenModuleFactory     => 0x8a285a4e09fa0a45cfd202e1b1461c11a3c0dfdd
 SupplyLimitTokenModuleFactory        => 0xfd38eaa6e0c4f2221ab8b2a12baad37a95fe00ef
 ForcedTransferTokenModuleFactory     => 0x83a17dcecbcd489b28d66c133e508a60b733edd2
 OfferingTokenModuleFactory           => 0x10307776e8efe220048aa5eb8971f73a3aa16741
-WhitelistFactory                     => 0x608f431a7b7c25697782802566a687cc555416f4
-TypedWhitelistFactory                => 0x9ebcc02e381263933eeb375fcfa989ebe801b36b
-StandardWhitelistFactory             => 0xad5408ee9889c8b4920190d3743b97d5ddbdae32
+WhitelistFactory                     => 0x34f76d54fea27b2d6297259b921bc135ec72024d
+StandardWhitelistFactory             => 0x40db31a08b497bac994d51368f3f789bc5914ef4
 MultiSigWalletFactory                => 0x940c73416a711f03b28b85447807b6db99ad0862
 ```
 
