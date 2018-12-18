@@ -10,13 +10,14 @@ let padBytes32 = function(value) {
 // KYC flag                           index   0, length   1 bits
 // KYC expiration timestamp           index   1, length  40 bits
 // Country code (two letters code)    index  41, length  16 bits
+let generalBucket      = web3.fromUtf8('general');
 let propKyc            = web3.fromUtf8('kyc');
 let propKycExpiration  = web3.fromUtf8('kycExpiration');
 let propCountry        = web3.fromUtf8('country');
 let props = {};
 props[propKyc] = {from: 0, len: 1};
 props[propKycExpiration] = {from: 1, len: 40};
-props[propCountry] = {from: 41, len: 16};
+props[propCountry] = {from: 82, len: 16};
 
 
 var Bytes32 = function(initBinaryVal) {
@@ -268,85 +269,85 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
     it('setting and checking string properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
         let props = packProperties(null, propCountry, Bytes32.fromString('us'));
-        await whitelist.setProps(accounts[1], '0x'+props.toHex(), {from: validator});
+        await whitelist.setBucket(accounts[1], generalBucket, '0x'+props.toHex(), {from: validator});
         props = packProperties(null, propCountry, Bytes32.fromString('ar'));
-        await whitelist.setProps(accounts[2], '0x'+props.toHex(), {from: validator});
+        await whitelist.setBucket(accounts[2], generalBucket, '0x'+props.toHex(), {from: validator});
 
 
-        let result = await whitelist.getProps.call(accounts[1]);
+        let result = await whitelist.getBucket.call(accounts[1], generalBucket);
         result = Bytes32.fromHex(result.toString(16));
         result = getProperties(result, propCountry);
         assert.equal(result.toStr(), 'us', 'properties configurations is incorrect');
 
-        result = await whitelist.getProp.call(accounts[1], propCountry);
+        result = await whitelist.getProperty.call(accounts[1], propCountry);
         assert.equal(Bytes32.fromHex(result.toString(16)).toStr(), 'us', 'country property was not set correctly');
 
-        result = await whitelist.getProp.call(accounts[2], propCountry);
+        result = await whitelist.getProperty.call(accounts[2], propCountry);
         assert.equal(Bytes32.fromHex(result.toString(16)).toStr(), 'ar', 'country property was not set correctly');
     });
 
     it('setting and checking boolean properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
         let props = packProperties(null, propKyc, Bytes32.fromBoolean(true));
-        await whitelist.setProps(accounts[1], '0x'+props.toHex(), {from: validator});
+        await whitelist.setBucket(accounts[1], generalBucket, '0x'+props.toHex(), {from: validator});
         props = packProperties(null, propKyc, Bytes32.fromBoolean(false));
-        await whitelist.setProps(accounts[2], '0x'+props.toHex(), {from: validator});
+        await whitelist.setBucket(accounts[2], generalBucket, '0x'+props.toHex(), {from: validator});
 
-        let result = await whitelist.getProp.call(accounts[1], propKyc);
+        let result = await whitelist.getProperty.call(accounts[1], propKyc);
         assert.equal(Bytes32.fromHex(result.toString(16)).toBoolean(), true, 'kyc property was not set correctly');
 
-        result = await whitelist.getProp.call(accounts[2], propKyc);
+        result = await whitelist.getProperty.call(accounts[2], propKyc);
         assert.equal(Bytes32.fromHex(result.toString(16)).toBoolean(), false, 'kyc property was not set correctly');
     });
 
 
     it('setting and checking number properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
         let props = packProperties(null, propKycExpiration, Bytes32.fromNumber(100));
-        await whitelist.setProps(accounts[1], '0x'+props.toHex(), {from: validator});
+        await whitelist.setBucket(accounts[1], generalBucket, '0x'+props.toHex(), {from: validator});
 
-        let result = await whitelist.getProp.call(accounts[1], propKycExpiration);
+        let result = await whitelist.getProperty.call(accounts[1], propKycExpiration);
         assert.equal(Bytes32.fromHex(result.toString(16)).toNumber(), 100, 'number property was not set correctly');
     });
 
 
     it('only validators can set properties', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
         let props = packProperties(null, propKycExpiration, Bytes32.fromNumber(100));
-        await truffleAssert.reverts(whitelist.setProps(accounts[1], '0x'+props.toHex(), {from: accounts[2]}));
+        await truffleAssert.reverts(whitelist.setBucket(accounts[1], generalBucket, '0x'+props.toHex(), {from: accounts[2]}));
     });
 
 
     it('only owner can add properties', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
-        await whitelist.addProperty('0x30', 90, 16, {from: owner});
-        await truffleAssert.reverts(whitelist.addProperty('0x31', 100, 12, {from: validator}));
-        await truffleAssert.reverts(whitelist.addProperty('0x30', 112, 4, {from: owner}));
+        await whitelist.addProperty('0x30', generalBucket, 90, 16, {from: owner});
+        await truffleAssert.reverts(whitelist.addProperty('0x31', generalBucket, 100, 12, {from: validator}));
+        await truffleAssert.reverts(whitelist.addProperty('0x30', generalBucket, 112, 4, {from: owner}));
     });
 });
