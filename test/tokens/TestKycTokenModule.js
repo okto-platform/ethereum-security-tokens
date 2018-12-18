@@ -31,6 +31,7 @@ contract('KycTokenModuleFactory', async(accounts) => {
     let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
     let dataOperatorTransfer = padBytes32(web3.fromUtf8('operatorTransfer'));
 
+    let generalBucket = web3.fromUtf8('general');
     let propKyc = web3.fromUtf8('kyc');
 
 
@@ -41,7 +42,7 @@ contract('KycTokenModuleFactory', async(accounts) => {
         tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
 
         let whitelistFactory = await StandardWhitelistFactory.deployed();
-        await whitelistFactory.createInstance([validator], [], [], [], {from: owner});
+        await whitelistFactory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
         let whitelistsCount = await whitelistFactory.getInstancesCount.call();
         whitelistAddress = await whitelistFactory.getInstance.call(whitelistsCount - 1);
 
@@ -57,8 +58,8 @@ contract('KycTokenModuleFactory', async(accounts) => {
 
     it('only allow issuance to whitelisted investors', async() => {
         let whitelist = StandardWhitelist.at(whitelistAddress);
-        await whitelist.setProps(investor1, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
-        await whitelist.setProps(investor2, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
+        await whitelist.setBucket(investor1, generalBucket, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
+        await whitelist.setBucket(investor2, generalBucket, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
 
         let token = SecurityToken.at(tokenAddress);
         await token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1});

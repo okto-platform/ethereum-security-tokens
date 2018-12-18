@@ -12,7 +12,6 @@ const ForcedTransferTokenModuleFactory = artifacts.require("ForcedTransferTokenM
 const OfferingTokenModuleFactory = artifacts.require("OfferingTokenModuleFactory");
 
 const WhitelistFactory = artifacts.require("WhitelistFactory");
-const TypedWhitelistFactory = artifacts.require("TypedWhitelistFactory");
 const StandardWhitelistFactory = artifacts.require("StandardWhitelistFactory");
 
 const MultiSigWalletFactory = artifacts.require("MultiSigWalletFactory");

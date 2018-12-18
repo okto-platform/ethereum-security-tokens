@@ -3,6 +3,8 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../utils/Factory.sol";
 import "../utils/AddressArrayLib.sol";
+import "./WhitelistModule.sol";
+import "../tokens/SecurityToken.sol";
 
 contract Whitelist is Ownable {
     using AddressArrayLib for address[];
@@ -14,22 +16,37 @@ contract Whitelist is Ownable {
         uint16 len;
     }
 
+    address public tokenAddress;
     address[] public validators;
     mapping(address => mapping (bytes32 => bytes32)) properties;
     mapping(bytes32 => Property) propertiesDefinition;
+    address[] internal modules;
 
     modifier onlyValidator {
         require(validators.contains(msg.sender), "Only validators can do this");
         _;
     }
 
-    constructor(address[] _validators, bytes32[] codes, bytes32[] buckets, uint8[] froms, uint16[] lens)
+    modifier onlyOwnerTx() {
+        require(msg.sender == owner || tx.origin == owner);
+        _;
+    }
+
+    modifier isDraft() {
+        SecurityToken token = SecurityToken(tokenAddress);
+        require(!token.released(), "Token is already released");
+        _;
+    }
+
+    constructor(address _tokenAddress, address[] _validators, bytes32[] codes, bytes32[] buckets, uint8[] froms, uint16[] lens)
     public
     {
+        require(_tokenAddress != address(0), "Token address is required");
         require(codes.length == buckets.length, "Different number of properties and buckets");
         require(codes.length == froms.length, "Different number of properties and indexes");
         require(codes.length == lens.length, "Different number of properties and lengths");
 
+        tokenAddress = _tokenAddress;
         validators = _validators;
 
         for (uint i = 0; i < codes.length; i++) {
@@ -72,9 +89,10 @@ contract Whitelist is Ownable {
     onlyValidator
     public
     {
+        bytes32 oldValue = properties[investor][bucket];
         properties[investor][bucket] = value;
 
-        emit UpdatedInvestor(investor, bucket, value);
+        notifyInvestorUpdated(investor, bucket, value, oldValue);
     }
 
     function setManyBuckets(address[] investors, bytes32[] buckets, bytes32[] values)
@@ -84,11 +102,25 @@ contract Whitelist is Ownable {
         require(investors.length == buckets.length, "Number of investors and number of buckets does not match");
         require(investors.length == values.length, "Number of investors and number of values does not match");
 
+        bytes32 oldValue;
         for (uint i = 0; i < investors.length; i++) {
+            oldValue = properties[investors[i]][buckets[i]];
             properties[investors[i]][buckets[i]] = values[i];
 
-            emit UpdatedInvestor(investors[i], buckets[i], values[i]);
+            notifyInvestorUpdated(investors[i], buckets[i], values[i], oldValue);
         }
+    }
+
+    function notifyInvestorUpdated(address investor, bytes32 bucket, bytes32 newValue, bytes32 oldValue)
+    internal
+    {
+        WhitelistModule module;
+        for (uint i = 0; i < modules.length; i++) {
+            module = WhitelistModule(modules[i]);
+            module.investorUpdated(investor, bucket, newValue, oldValue);
+        }
+
+        emit UpdatedInvestor(investor, bucket, newValue);
     }
 
     function getBucket(address investor, bytes32 bucket)
@@ -128,17 +160,45 @@ contract Whitelist is Ownable {
         emit AddedProperty(code, bucket, from, len);
     }
 
+    function addModule(address moduleAddress)
+    onlyOwnerTx isDraft
+    public
+    {
+        require(moduleAddress != address(0), "Module address is required");
+
+        modules.addIfNotPresent(moduleAddress);
+
+        emit AddedModule(moduleAddress);
+    }
+
+    function removeModule(address moduleAddress)
+    onlyOwnerTx isDraft
+    public
+    {
+        modules.removeValue(moduleAddress);
+
+        emit RemovedModule(moduleAddress);
+    }
+
+    function isModule(address moduleAddress)
+    public view returns (bool)
+    {
+        return modules.contains(moduleAddress);
+    }
+
     event AddedValidator(address validator);
     event RemovedValidator(address validator);
     event AddedProperty(bytes32 code, bytes32 bucket, uint8 from, uint16 len);
+    event AddedModule(address moduleAddress);
+    event RemovedModule(address moduleAddress);
     event UpdatedInvestor(address investor, bytes32 bucket, bytes32 value);
 }
 
 contract WhitelistFactory is Factory {
-    function createInstance(address[] validators, bytes32[] codes, bytes32[] buckets, uint8[] froms, uint16[] lens)
+    function createInstance(address tokenAddress, address[] validators, bytes32[] codes, bytes32[] buckets, uint8[] froms, uint16[] lens)
     public returns(address)
     {
-        Whitelist instance = new Whitelist(validators, codes, buckets, froms, lens);
+        Whitelist instance = new Whitelist(tokenAddress, validators, codes, buckets, froms, lens);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         return instance;

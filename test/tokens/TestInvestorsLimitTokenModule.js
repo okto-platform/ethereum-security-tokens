@@ -35,7 +35,7 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
         tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
 
         let moduleFactory = await InvestorsLimitTokenModuleFactory.deployed();
-        await moduleFactory.createInstance(tokenAddress, 2, {from: owner});
+        await moduleFactory.createInstance(tokenAddress, 2, '0x0', '0x0', {from: owner});
         let modulesCount = await moduleFactory.getInstancesCount.call();
         moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
 

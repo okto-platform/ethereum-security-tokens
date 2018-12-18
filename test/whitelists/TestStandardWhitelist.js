@@ -2,6 +2,7 @@ const truffleAssert = require('truffle-assertions');
 
 const StandardWhitelistFactory = artifacts.require("StandardWhitelistFactory");
 const StandardWhitelist = artifacts.require("StandardWhitelist");
+const SecurityTokenFactory = artifacts.require("SecurityTokenFactory");
 
 let padBytes32 = function(value) {
     return value.padEnd(66, '0');
@@ -264,12 +265,20 @@ let getProperties = function(value, prop) {
 
 
 contract('StandardWhitelistFactory', async(accounts) => {
+    let tokenAddress;
     let owner = accounts[0];
     let validator = accounts[9];
 
+    it('configure token', async() => {
+        let factory = await SecurityTokenFactory.deployed();
+        await factory.createInstance('Token A', 'TOKA', 18, [owner], {from: owner});
+        let tokensCount = await factory.getInstancesCount.call();
+        tokenAddress = await factory.getInstance.call(tokensCount - 1);
+    });
+
     it('setting and checking string properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], [], {from: owner});
+        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
@@ -294,7 +303,7 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
     it('setting and checking boolean properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], [], {from: owner});
+        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
@@ -314,7 +323,7 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
     it('setting and checking number properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], [], {from: owner});
+        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
@@ -329,7 +338,7 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
     it('only validators can set properties', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], [], {from: owner});
+        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
@@ -341,7 +350,7 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
     it('only owner can add properties', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance([validator], [], [], [], [], {from: owner});
+        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
