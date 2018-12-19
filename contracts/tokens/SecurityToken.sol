@@ -46,7 +46,7 @@ contract ISecurityToken is Pausable {
     function burnByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data) public;
 
     // Events
-    event AddedModule(address moduleAddress);
+    event AddedModule(address moduleAddress, string moduleType);
     event RemovedModule(address moduleAddress);
     event Released();
     event AuthorizedOperator(address indexed operator);
@@ -142,7 +142,7 @@ contract SecurityToken is ISecurityToken {
 
         AddressArrayLib.addIfNotPresent(modules, moduleAddress);
 
-        emit AddedModule(moduleAddress);
+        emit AddedModule(moduleAddress, module.moduleType());
     }
 
     function removeModule(address moduleAddress)

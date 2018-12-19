@@ -3,8 +3,8 @@ pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract WhitelistModule is Ownable {
-    address whitelistAddress;
-    string moduleType;
+    address public whitelistAddress;
+    string public moduleType;
 
     modifier onlyWhitelist {
         require(whitelistAddress == msg.sender, "Only whitelist can call this method");

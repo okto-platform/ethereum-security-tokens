@@ -15,6 +15,7 @@ import "./Whitelist.sol";
 // Country code (two letters code)    index  82, length  16 bits
 // Insider                            index  98, length   1 bits
 // Lockup expiration                  index  99, length  40 bits
+// Exchanger                          index 139, length   1 bits
 // Investor ID Bucket ------------------------------------------
 // Investor ID                        index   0, length 256 bits
 // KYC Reference Bucket ----------------------------------------
@@ -32,65 +33,60 @@ contract StandardWhitelist is Whitelist {
         // define this standard properties; if they were also passed in the constructor
         // they will be overridden
 
-        bytes32 kyc = bytes32("kyc");
-        propertiesDefinition[kyc].code = kyc;
-        propertiesDefinition[kyc].bucket = bytes32("general");
-        propertiesDefinition[kyc].from = 0;
-        propertiesDefinition[kyc].len = 1;
+        propertiesDefinition[bytes32("kyc")].code = bytes32("kyc");
+        propertiesDefinition[bytes32("kyc")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("kyc")].from = 0;
+        propertiesDefinition[bytes32("kyc")].len = 1;
 
-        bytes32 kycExpiration = bytes32("kycExpiration");
-        propertiesDefinition[kycExpiration].code = kycExpiration;
-        propertiesDefinition[kycExpiration].bucket = bytes32("general");
-        propertiesDefinition[kycExpiration].from = 1;
-        propertiesDefinition[kycExpiration].len = 40;
+        propertiesDefinition[bytes32("kycExpiration")].code = bytes32("kycExpiration");
+        propertiesDefinition[bytes32("kycExpiration")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("kycExpiration")].from = 1;
+        propertiesDefinition[bytes32("kycExpiration")].len = 40;
 
-        bytes32 accredited = bytes32("accredited");
-        propertiesDefinition[accredited].code = accredited;
-        propertiesDefinition[accredited].bucket = bytes32("general");
-        propertiesDefinition[accredited].from = 41;
-        propertiesDefinition[accredited].len = 1;
+        propertiesDefinition[bytes32("accredited")].code = bytes32("accredited");
+        propertiesDefinition[bytes32("accredited")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("accredited")].from = 41;
+        propertiesDefinition[bytes32("accredited")].len = 1;
 
-        bytes32 accreditedExpiration = bytes32("accreditedExpiration");
-        propertiesDefinition[accreditedExpiration].code = accreditedExpiration;
-        propertiesDefinition[accreditedExpiration].bucket = bytes32("general");
-        propertiesDefinition[accreditedExpiration].from = 42;
-        propertiesDefinition[accreditedExpiration].len = 40;
+        propertiesDefinition[bytes32("accreditedExpiration")].code = bytes32("accreditedExpiration");
+        propertiesDefinition[bytes32("accreditedExpiration")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("accreditedExpiration")].from = 42;
+        propertiesDefinition[bytes32("accreditedExpiration")].len = 40;
 
-        bytes32 country = bytes32("country");
-        propertiesDefinition[country].code = country;
-        propertiesDefinition[country].bucket = bytes32("general");
-        propertiesDefinition[country].from = 82;
-        propertiesDefinition[country].len = 16;
+        propertiesDefinition[bytes32("country")].code = bytes32("country");
+        propertiesDefinition[bytes32("country")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("country")].from = 82;
+        propertiesDefinition[bytes32("country")].len = 16;
 
-        bytes32 insider = bytes32("insider");
-        propertiesDefinition[insider].code = insider;
-        propertiesDefinition[insider].bucket = bytes32("general");
-        propertiesDefinition[insider].from = 98;
-        propertiesDefinition[insider].len = 1;
+        propertiesDefinition[bytes32("insider")].code = bytes32("insider");
+        propertiesDefinition[bytes32("insider")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("insider")].from = 98;
+        propertiesDefinition[bytes32("insider")].len = 1;
 
-        bytes32 lockupExpiration = bytes32("lockupExpiration");
-        propertiesDefinition[lockupExpiration].code = lockupExpiration;
-        propertiesDefinition[lockupExpiration].bucket = bytes32("general");
-        propertiesDefinition[lockupExpiration].from = 99;
-        propertiesDefinition[lockupExpiration].len = 40;
+        propertiesDefinition[bytes32("lockupExpiration")].code = bytes32("lockupExpiration");
+        propertiesDefinition[bytes32("lockupExpiration")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("lockupExpiration")].from = 99;
+        propertiesDefinition[bytes32("lockupExpiration")].len = 40;
 
-        bytes32 investorId = bytes32("investorId");
-        propertiesDefinition[investorId].code = investorId;
-        propertiesDefinition[investorId].bucket = bytes32("investorId");
-        propertiesDefinition[investorId].from = 0;
-        propertiesDefinition[investorId].len = 256;
+        propertiesDefinition[bytes32("exchanger")].code = bytes32("exchanger");
+        propertiesDefinition[bytes32("exchanger")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("exchanger")].from = 139;
+        propertiesDefinition[bytes32("exchanger")].len = 1;
 
-        bytes32 kycReference = bytes32("kycReference");
-        propertiesDefinition[kycReference].code = kycReference;
-        propertiesDefinition[kycReference].bucket = bytes32("kycReference");
-        propertiesDefinition[kycReference].from = 0;
-        propertiesDefinition[kycReference].len = 256;
+        propertiesDefinition[bytes32("investorId")].code = bytes32("investorId");
+        propertiesDefinition[bytes32("investorId")].bucket = bytes32("investorId");
+        propertiesDefinition[bytes32("investorId")].from = 0;
+        propertiesDefinition[bytes32("investorId")].len = 256;
 
-        bytes32 accreditedReference = bytes32("accreditedReference");
-        propertiesDefinition[accreditedReference].code = accreditedReference;
-        propertiesDefinition[accreditedReference].bucket = bytes32("accreditedReference");
-        propertiesDefinition[accreditedReference].from = 0;
-        propertiesDefinition[accreditedReference].len = 256;
+        propertiesDefinition[bytes32("kycReference")].code = bytes32("kycReference");
+        propertiesDefinition[bytes32("kycReference")].bucket = bytes32("kycReference");
+        propertiesDefinition[bytes32("kycReference")].from = 0;
+        propertiesDefinition[bytes32("kycReference")].len = 256;
+
+        propertiesDefinition[bytes32("accreditedReference")].code = bytes32("accreditedReference");
+        propertiesDefinition[bytes32("accreditedReference")].bucket = bytes32("accreditedReference");
+        propertiesDefinition[bytes32("accreditedReference")].from = 0;
+        propertiesDefinition[bytes32("accreditedReference")].len = 256;
     }
 }
 

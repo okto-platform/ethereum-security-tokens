@@ -37,7 +37,7 @@ contract TranchesManagerTokenModule {
 contract TokenModule is Ownable {
     enum Feature {TransferValidator, TransferListener, TranchesManager}
 
-    address tokenAddress;
+    address public tokenAddress;
     string public moduleType;
 
     modifier onlyToken {

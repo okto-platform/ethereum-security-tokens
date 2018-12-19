@@ -6,6 +6,7 @@ const Bytes32ArrayLibTest = artifacts.require("Bytes32ArrayLibTest");
 const SecurityTokenFactory = artifacts.require("SecurityTokenFactory");
 
 const KycTokenModuleFactory = artifacts.require("KycTokenModuleFactory");
+const RestrictSenderTokenModuleFactory = artifacts.require("RestrictSenderTokenModuleFactory");
 const InvestorsLimitTokenModuleFactory = artifacts.require("InvestorsLimitTokenModuleFactory");
 const SupplyLimitTokenModuleFactory = artifacts.require("SupplyLimitTokenModuleFactory");
 const ForcedTransferTokenModuleFactory = artifacts.require("ForcedTransferTokenModuleFactory");
@@ -35,6 +36,7 @@ module.exports = function(deployer) {
 
   // Token modules
 
+  deployer.deploy(RestrictSenderTokenModuleFactory);
   deployer.deploy(KycTokenModuleFactory);
   deployer.deploy(InvestorsLimitTokenModuleFactory);
   deployer.deploy(SupplyLimitTokenModuleFactory);

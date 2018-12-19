@@ -168,7 +168,9 @@ contract Whitelist is Ownable {
 
         modules.addIfNotPresent(moduleAddress);
 
-        emit AddedModule(moduleAddress);
+        WhitelistModule module = WhitelistModule(moduleAddress);
+
+        emit AddedModule(moduleAddress, module.moduleType());
     }
 
     function removeModule(address moduleAddress)
@@ -189,7 +191,7 @@ contract Whitelist is Ownable {
     event AddedValidator(address validator);
     event RemovedValidator(address validator);
     event AddedProperty(bytes32 code, bytes32 bucket, uint8 from, uint16 len);
-    event AddedModule(address moduleAddress);
+    event AddedModule(address moduleAddress, string moduleType);
     event RemovedModule(address moduleAddress);
     event UpdatedInvestor(address investor, bytes32 bucket, bytes32 value);
 }
