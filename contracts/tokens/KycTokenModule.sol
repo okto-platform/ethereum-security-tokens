@@ -25,7 +25,7 @@ contract KycTokenModule is TransferValidatorTokenModule,TokenModule {
     }
 
 
-    function validateTransfer(bytes32, bytes32, address, address, address to, uint256, bytes, bytes)
+    function validateTransfer(bytes32, bytes32, address, address, address to, uint256, bytes)
     public view returns (byte, string)
     {
         Whitelist whitelist = Whitelist(whitelistAddress);

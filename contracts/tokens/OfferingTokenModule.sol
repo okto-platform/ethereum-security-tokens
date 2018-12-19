@@ -25,7 +25,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
     }
 
     function issueTokens(bytes32[] tranches, address[] investors, uint256[] amounts)
-    onlyTokenDefaultOperator whenNotPaused
+    onlyTokenOperator whenNotPaused
     public
     {
         require(investors.length == tranches.length && tranches.length == amounts.length, "Number of investors, tranches and amounts does not match");
@@ -36,7 +36,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         string memory message;
         SecurityToken token = SecurityToken(tokenAddress);
         for (uint i = 0; i < investors.length; i++) {
-            (res, message, ) = token.canSend(tranches[i], msg.sender, address(0), investors[i], amounts[i], new bytes(0), abi.encodePacked("issuing"));
+            (res, message, ) = token.canTransfer(tranches[i], msg.sender, address(0), investors[i], amounts[i], abi.encodePacked("issuing"));
             if (res != 0xA0 && res != 0xA1 && res != 0xA2 && res != 0xAF) {
                 emit TokenAllocationError(i, res, message);
             } else {
@@ -56,7 +56,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         string memory message;
         SecurityToken token = SecurityToken(tokenAddress);
         for (uint i = 0; i < investors.length; i++) {
-            (res, message, ) = token.canSend(tranches[i], msg.sender, address(0), investors[i], amounts[i], new bytes(0), abi.encodePacked("reservation"));
+            (res, message, ) = token.canTransfer(tranches[i], msg.sender, address(0), investors[i], amounts[i], abi.encodePacked("reservation"));
             if (res != 0xA0 && res != 0xA1 && res != 0xA2 && res != 0xAF) {
                 emit TokenAllocationError(i, res, message);
             } else {
@@ -65,12 +65,12 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         }
     }
 
-    function validateTransfer(bytes32, bytes32, address, address from, address, uint256, bytes, bytes operatorData)
+    function validateTransfer(bytes32, bytes32, address, address from, address, uint256, bytes data)
     public view returns (byte, string)
     {
         if (from == address(0)) {
             // if this is a token reservation (only done by the owner of the token) we don't perform this validation
-            if (keccak256(operatorData) != keccak256(abi.encodePacked("reservation"))) {
+            if (keccak256(data) != keccak256(abi.encodePacked("reservation"))) {
                 // we need to only allow issuance if we are between start and end
                 if (now < start || now > end) {
                     return (0xA8, "Offering not in progress");

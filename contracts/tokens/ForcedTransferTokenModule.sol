@@ -72,7 +72,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
         }
     }
 
-    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes, bytes)
+    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes)
     public view returns (byte, string)
     {
         if (numberOfPendingTransfers > 0) {
@@ -88,7 +88,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
         return (0xA1, "Approved");
     }
 
-    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes, bytes)
+    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes)
     public
     {
         if (numberOfPendingTransfers == 0) {

@@ -20,17 +20,17 @@ contract TransferValidatorTokenModule {
     // 0xAA Transfer Blocked - Negative amount
     // 0xAF Transfer Verified - Forced
 
-    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
+    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data)
     public view returns (byte, string);
 }
 
 contract TransferListenerTokenModule {
-    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data, bytes operatorData)
+    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data)
     public;
 }
 
 contract TranchesManagerTokenModule {
-    function calculateDestinationTranche(bytes32 currentDestinationTranche, bytes32 sourceTranche, address from, uint256 amount, bytes data, bytes operatorData)
+    function calculateDestinationTranche(bytes32 currentDestinationTranche, bytes32 sourceTranche, address from, uint256 amount, bytes data)
     public view returns(bytes32);
 }
 
@@ -51,9 +51,9 @@ contract TokenModule is Ownable {
         _;
     }
 
-    modifier onlyTokenDefaultOperator {
+    modifier onlyTokenOperator {
         ISecurityToken token = ISecurityToken(tokenAddress);
-        require(token.isDefaultOperator(msg.sender), "Only default operators of the token can do this");
+        require(token.isOperator(msg.sender), "Only operators of the token can do this");
         _;
     }
 

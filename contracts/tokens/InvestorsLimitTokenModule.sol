@@ -35,7 +35,7 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
         return features;
     }
 
-    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256 amount, bytes, bytes)
+    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256 amount, bytes)
     public view returns (byte, string)
     {
         SecurityToken token = SecurityToken(tokenAddress);
@@ -72,7 +72,7 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
         return (0xA1, "Approved");
     }
 
-    function transferDone(bytes32, bytes32, address, address from, address to, uint256 amount, bytes, bytes)
+    function transferDone(bytes32, bytes32, address, address from, address to, uint256 amount, bytes)
     public
     {
         SecurityToken token = SecurityToken(tokenAddress);
