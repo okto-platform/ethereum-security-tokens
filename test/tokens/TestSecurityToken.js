@@ -22,7 +22,6 @@ contract('SecurityTokenFactory', async(accounts) => {
 
     let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
     let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
-    let dataOperatorTransfer = padBytes32(web3.fromUtf8('operatorTransfer'));
 
     it('create token', async() => {
         let factory = await SecurityTokenFactory.deployed();
@@ -83,8 +82,8 @@ contract('SecurityTokenFactory', async(accounts) => {
 
     it('investor transfer tokens', async() => {
         let token = await SecurityToken.at(tokenAddress);
-        let result = await token.sendByTranche(trancheUnrestricted, investor3, 200, dataUserTransfer, {from: investor1});
-        truffleAssert.eventEmitted(result, 'SentByTranche');
+        let result = await token.transferByTranche(trancheUnrestricted, investor3, 200, dataUserTransfer, {from: investor1});
+        truffleAssert.eventEmitted(result, 'TransferByTranche');
         truffleAssert.eventEmitted(result, 'Transfer');
 
         let globalBalance = await token.balanceOf.call(investor1);
@@ -105,8 +104,8 @@ contract('SecurityTokenFactory', async(accounts) => {
 
     it('operator transfer tokens', async() => {
         let token = await SecurityToken.at(tokenAddress);
-        let result = await token.operatorSendByTranche(trancheLocked, investor2, investor3, 500, dataUserTransfer, dataOperatorTransfer, {from: operator1});
-        truffleAssert.eventEmitted(result, 'SentByTranche');
+        let result = await token.operatorTransferByTranche(trancheLocked, investor2, investor3, 500, dataUserTransfer, {from: operator1});
+        truffleAssert.eventEmitted(result, 'TransferByTranche');
         truffleAssert.eventEmitted(result, 'Transfer');
 
         let globalBalance = await token.balanceOf.call(investor2);
@@ -141,8 +140,8 @@ contract('SecurityTokenFactory', async(accounts) => {
         assert.include(tranches, trancheLocked, 'Locked tranche not found');
 
         // check that tranche is remove after it goes to zero
-        let result = await token.operatorSendByTranche(trancheLocked, investor2, investor3, 500, dataUserTransfer, dataOperatorTransfer, {from: operator1});
-        truffleAssert.eventEmitted(result, 'SentByTranche');
+        let result = await token.operatorTransferByTranche(trancheLocked, investor2, investor3, 500, dataUserTransfer, {from: operator1});
+        truffleAssert.eventEmitted(result, 'TransferByTranche');
         truffleAssert.eventEmitted(result, 'Transfer');
         tranches = await token.tranchesOf.call(investor2);
         assert.equal(tranches.length, 1, 'Tranche was not removed when it was zero');

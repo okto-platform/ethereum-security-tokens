@@ -31,7 +31,6 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
 
     let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
     let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
-    let dataOperatorTransfer = padBytes32(web3.fromUtf8('operatorTransfer'));
 
     let investorIdBucket = web3.fromUtf8('investorId');
     let investorId1 = web3.fromUtf8('investor1');
@@ -94,7 +93,7 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
     it('allow to transfer tokens to same investor in different wallet', async() => {
         let token = SecurityToken.at(tokenAddress);
         let module = InvestorsLimitTokenModule.at(moduleAddress);
-        await token.sendByTranche(trancheUnrestricted, investor3c, 1000, dataUserTransfer, {from: investor3a});
+        await token.transferByTranche(trancheUnrestricted, investor3c, 1000, dataUserTransfer, {from: investor3a});
         let numberOfInvestors = await module.numberOfInvestors.call();
         assert.equal(numberOfInvestors.valueOf(), 2, "Invalid number of investors");
     });

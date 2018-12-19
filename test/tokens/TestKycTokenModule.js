@@ -29,7 +29,6 @@ contract('KycTokenModuleFactory', async(accounts) => {
 
     let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
     let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
-    let dataOperatorTransfer = padBytes32(web3.fromUtf8('operatorTransfer'));
 
     let generalBucket = web3.fromUtf8('general');
     let propKyc = web3.fromUtf8('kyc');
@@ -88,6 +87,6 @@ contract('KycTokenModuleFactory', async(accounts) => {
     it('cannot transfer tokens to unknown investors', async() => {
         let token = SecurityToken.at(tokenAddress);
 
-        await truffleAssert.reverts(token.sendByTranche(trancheUnrestricted, investor3, 1000, dataIssuing, {from: investor1}));
+        await truffleAssert.reverts(token.transferByTranche(trancheUnrestricted, investor3, 1000, dataIssuing, {from: investor1}));
     });
 });

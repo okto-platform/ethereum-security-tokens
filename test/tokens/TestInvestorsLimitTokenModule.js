@@ -25,7 +25,6 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
 
     let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
     let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
-    let dataOperatorTransfer = padBytes32(web3.fromUtf8('operatorTransfer'));
 
 
     it('configure module', async() => {
@@ -62,13 +61,13 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
 
     it('decrease number of investors when there are no more tokens', async() => {
         let token = SecurityToken.at(tokenAddress);
-        await token.operatorRedeemByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, dataOperatorTransfer, {from: operator1});
+        await token.burnByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, {from: operator1});
         await token.issueByTranche(trancheUnrestricted, investor3, 1000, dataIssuing, {from: operator1});
     });
 
 
     it('allow to transfer all tokens to another investor', async() => {
         let token = SecurityToken.at(tokenAddress);
-        await token.sendByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, {from: investor3});
+        await token.transferByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, {from: investor3});
     });
 });

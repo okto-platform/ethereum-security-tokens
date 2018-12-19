@@ -32,7 +32,6 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
 
     let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
     let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
-    let dataOperatorTransfer = padBytes32(web3.fromUtf8('operatorTransfer'));
 
     let generalBucket = web3.fromUtf8('general');
     let propKyc = web3.fromUtf8('kyc');
@@ -75,30 +74,30 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
         await token.issueByTranche(trancheUnrestricted, investor2, 2000, dataIssuing, {from: operator1});
 
         // try to transfer tokens to investor3 and check it fails
-        await truffleAssert.reverts(token.sendByTranche(trancheUnrestricted, investor3, 500, dataIssuing, {from: investor1}));
+        await truffleAssert.reverts(token.transferByTranche(trancheUnrestricted, investor3, 500, dataIssuing, {from: investor1}));
 
         // force transfer and check if it can be sent
         let module = ForcedTransferTokenModule.at(moduleAddress);
         await module.approveForcedTransfer(trancheUnrestricted, trancheUnrestricted, operator1, investor1, investor3, 500, {from: owner});
-        let result = await token.canSend.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer, dataOperatorTransfer);
+        let result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xaf', 'Transfer is not forced');
-        result = await token.canSend.call(trancheUnrestricted, operator1, investor1, investor3, 1000, dataUserTransfer, dataOperatorTransfer);
+        result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 1000, dataUserTransfer);
         assert.equal(result[0], '0xa6', 'Transfer with different details was still approved');
-        result = await token.canSend.call(trancheUnrestricted, operator2, investor1, investor3, 500, dataUserTransfer, dataOperatorTransfer);
+        result = await token.canTransfer.call(trancheUnrestricted, operator2, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xa6', 'Transfer with different details was still approved');
         // we can check multiple times without problem
-        result = await token.canSend.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer, dataOperatorTransfer);
+        result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xaf', 'Transfer is not forced');
 
         // perform the transfer and make sure it works
-        await token.operatorSendByTranche(trancheUnrestricted, investor1, investor3, 500, dataIssuing, dataOperatorTransfer, {from: operator1});
+        await token.operatorTransferByTranche(trancheUnrestricted, investor1, investor3, 500, dataIssuing, {from: operator1});
         let balance = await token.balanceOf.call(investor3);
         assert.equal(balance.valueOf(), 500, 'Balance of receiver was not updated');
         balance = await token.balanceOf.call(investor1);
         assert.equal(balance.valueOf(), 500, 'Balance of sender was not updated');
 
         // make sure that it cannot be done again
-        result = await token.canSend.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer, dataOperatorTransfer);
+        result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xa6', 'Forced transfer can be repeated');
     });
 
@@ -107,11 +106,11 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
         let token = SecurityToken.at(tokenAddress);
         let module = ForcedTransferTokenModule.at(moduleAddress);
         await module.approveForcedTransfer(trancheUnrestricted, trancheUnrestricted, operator1, investor1, investor3, 500, {from: owner});
-        let result = await token.canSend.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer, dataOperatorTransfer);
+        let result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xaf', 'Transfer is not forced');
 
         await module.revokeForcedTransfer(trancheUnrestricted, trancheUnrestricted, operator1, investor1, investor3, 500, {from: owner});
-        result = await token.canSend.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer, dataOperatorTransfer);
+        result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xa6', 'Forced transfer was not revoked');
     });
 
