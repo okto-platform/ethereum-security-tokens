@@ -174,14 +174,14 @@ These are the current contract addresses of the factories on Ropsten:
 
 ```
 SecurityTokenFactory                 => 0xd07c95ce7323c558cf1c793a832cbfe2f4c31ccb
-RestrictSenderTokenModuleFactory     => 0x2a843b0814fc70e376d8d6fca55e7fd90bb46258
+RestrictSenderTokenModuleFactory     => 0x7444be0f6e2ab2a09c49762310d752ca62559edb
 KycTokenModuleFactory                => 0xddc2f4df1e0f5e705dd41b50a02265671209f8ce
 InvestorsLimitTokenModuleFactory     => 0xe31797373defd2d0bdc4f07c00cf3a4f923feabf
 SupplyLimitTokenModuleFactory        => 0x64332ea04ffcfadd26c7acd7bea5318091c21a93
 ForcedTransferTokenModuleFactory     => 0xdb3a8fe37ad6f2832cdbc63d53ba777af0ad4485
 OfferingTokenModuleFactory           => 0x985c000df75fe29dd070cc0c3abe5d2792795c64
 WhitelistFactory                     => 0xa605dba2bd72079e8b2c570176a810e059875d83
-StandardWhitelistFactory             => 0x669b55d21566e49bae92daad590dca16e2c31cc0
+StandardWhitelistFactory             => 0x0d7ce998d79c87a323043f7b0cb20e069da4c3ea
 MultiSigWalletFactory                => 0x6eedb6f85012c57a2789860ad27eee8be7821d8e
 ```
 
