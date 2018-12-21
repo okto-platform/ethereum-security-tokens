@@ -14,7 +14,11 @@ let padBytes32 = function(value) {
 let generalBucket      = web3.fromUtf8('general');
 let propKyc            = web3.fromUtf8('kyc');
 let propKycExpiration  = web3.fromUtf8('kycExpiration');
+let propAccredited     = web3.fromUtf8('accredited');
+let propAccreditedExpiration  = web3.fromUtf8('accreditedExpiration');
 let propCountry        = web3.fromUtf8('country');
+let propInsider        = web3.fromUtf8('insider');
+let propAts            = web3.fromUtf8('ats');
 let props = {};
 props[propKyc] = {from: 0, len: 1};
 props[propKycExpiration] = {from: 1, len: 40};
@@ -268,6 +272,7 @@ contract('StandardWhitelistFactory', async(accounts) => {
     let tokenAddress;
     let owner = accounts[0];
     let validator = accounts[9];
+    let investor1 = accounts[1];
 
     it('configure token', async() => {
         let factory = await SecurityTokenFactory.deployed();
@@ -359,4 +364,29 @@ contract('StandardWhitelistFactory', async(accounts) => {
         await truffleAssert.reverts(whitelist.addProperty('0x31', generalBucket, 100, 12, {from: validator}));
         await truffleAssert.reverts(whitelist.addProperty('0x30', generalBucket, 112, 4, {from: owner}));
     });
+
+
+    it('ready properties', async() => {
+        let factory = await StandardWhitelistFactory.deployed();
+        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        let whitelistsCount = await factory.getInstancesCount.call();
+        let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
+        let whitelist = await StandardWhitelist.at(whitelistAddress);
+
+        // kyc: 1, kycExpiration: 463723572224, accredited: 1, accreditedExpiration: 463723572224, insider: 0, ats: 0
+        await whitelist.setBucket(investor1, generalBucket, '0xb5fc0a16005afe050b001554cd7f028580000000000000000000000000000000', {from: validator});
+        let res = await whitelist.getProperty.call(investor1, propKyc);
+        assert.equal(res.valueOf(), 1, "KYC is invalid");
+        res = await whitelist.getProperty.call(investor1, propKycExpiration);
+        assert.equal(res.valueOf(), 463723572224, "KYC expiration is invalid");
+        res = await whitelist.getProperty.call(investor1, propAccredited);
+        assert.equal(res.valueOf(), 1, "Accredited is invalid");
+        res = await whitelist.getProperty.call(investor1, propAccreditedExpiration);
+        assert.equal(res.valueOf(), 463723572224, "Accredited expiration is invalid");
+        res = await whitelist.getProperty.call(investor1, propInsider);
+        assert.equal(res.valueOf(), 0, "Insider is invalid");
+        res = await whitelist.getProperty.call(investor1, propAts);
+        assert.equal(res.valueOf(), 0, "ATS is invalid");
+    });
+
 });
