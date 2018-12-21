@@ -15,7 +15,7 @@ import "./Whitelist.sol";
 // Country code (two letters code)    index  82, length  16 bits
 // Insider                            index  98, length   1 bits
 // Lockup expiration                  index  99, length  40 bits
-// Exchanger                          index 139, length   1 bits
+// ATS                                index 139, length   1 bits
 // Investor ID Bucket ------------------------------------------
 // Investor ID                        index   0, length 256 bits
 // KYC Reference Bucket ----------------------------------------
@@ -68,10 +68,10 @@ contract StandardWhitelist is Whitelist {
         propertiesDefinition[bytes32("lockupExpiration")].from = 99;
         propertiesDefinition[bytes32("lockupExpiration")].len = 40;
 
-        propertiesDefinition[bytes32("exchanger")].code = bytes32("exchanger");
-        propertiesDefinition[bytes32("exchanger")].bucket = bytes32("general");
-        propertiesDefinition[bytes32("exchanger")].from = 139;
-        propertiesDefinition[bytes32("exchanger")].len = 1;
+        propertiesDefinition[bytes32("ats")].code = bytes32("ats");
+        propertiesDefinition[bytes32("ats")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("ats")].from = 139;
+        propertiesDefinition[bytes32("ats")].len = 1;
 
         propertiesDefinition[bytes32("investorId")].code = bytes32("investorId");
         propertiesDefinition[bytes32("investorId")].bucket = bytes32("investorId");

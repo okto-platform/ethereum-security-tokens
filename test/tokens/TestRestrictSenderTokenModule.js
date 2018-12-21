@@ -31,7 +31,6 @@ contract('RestrictSenderTokenModuleFactory', async(accounts) => {
     let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
 
     let generalBucket = web3.fromUtf8('general');
-    let propKyc = web3.fromUtf8('exchanger');
 
 
     it('configure module', async() => {
@@ -58,7 +57,7 @@ contract('RestrictSenderTokenModuleFactory', async(accounts) => {
         await token.issueByTranche(trancheLocked, investor2, 500, dataIssuing, {from: operator1});
 
         let whitelist = StandardWhitelist.at(whitelistAddress);
-        await whitelist.setBucket(investor2, generalBucket, '0x0000000000000000000000000000000000100000000000000000000000000000'); // exchanger flag set
+        await whitelist.setBucket(investor2, generalBucket, '0x0000000000000000000000000000000000100000000000000000000000000000'); // ats flag set
     });
 
 
@@ -80,7 +79,7 @@ contract('RestrictSenderTokenModuleFactory', async(accounts) => {
     });
 
 
-    it('allow to transfer tokens from exchanger', async() => {
+    it('allow to transfer tokens from ats', async() => {
         let token = SecurityToken.at(tokenAddress);
 
         await token.transferByTranche(trancheUnrestricted, investor3, 1000, dataUserTransfer, {from: investor2});

@@ -7,19 +7,19 @@ import "./TokenModule.sol";
 contract RestrictSenderTokenModule is TransferValidatorTokenModule,TokenModule {
     address public whitelistAddress;
     bool public allowOperators;
-    bool public allowExchangers;
+    bool public allowAts;
 
-    bytes32 constant EXCHANGER_PROP = bytes32("exchanger");
+    bytes32 constant ATS_PROP = bytes32("ats");
 
-    constructor(address _tokenAddress, address _whitelistAddress, bool _allowOperators, bool _allowExchangers)
+    constructor(address _tokenAddress, address _whitelistAddress, bool _allowOperators, bool _allowAts)
     TokenModule(_tokenAddress, "restrictSender")
     public
     {
-        require(_allowOperators || _allowExchangers, "You need to allow at least one type of users");
+        require(_allowOperators || _allowAts, "You need to allow at least one type of users");
 
         whitelistAddress = _whitelistAddress;
         allowOperators = _allowOperators;
-        allowExchangers = _allowExchangers;
+        allowAts = _allowAts;
     }
 
     function getFeatures()
@@ -37,7 +37,7 @@ contract RestrictSenderTokenModule is TransferValidatorTokenModule,TokenModule {
         Whitelist whitelist = Whitelist(whitelistAddress);
         if (
             allowOperators && operator != address(0) ||
-            allowExchangers && operator == address(0) && whitelist.getProperty(from, EXCHANGER_PROP) == 1
+            allowAts && operator == address(0) && whitelist.getProperty(from, ATS_PROP) == 1
         ) {
             return (0xA1, "Approved");
         } else {
@@ -47,10 +47,10 @@ contract RestrictSenderTokenModule is TransferValidatorTokenModule,TokenModule {
 }
 
 contract RestrictSenderTokenModuleFactory is Factory {
-    function createInstance(address _tokenAddress, address _whitelistAddress, bool _allowOperators, bool _allowExchangers)
+    function createInstance(address _tokenAddress, address _whitelistAddress, bool _allowOperators, bool _allowAts)
     public returns(address)
     {
-        RestrictSenderTokenModule instance = new RestrictSenderTokenModule(_tokenAddress, _whitelistAddress, _allowOperators, _allowExchangers);
+        RestrictSenderTokenModule instance = new RestrictSenderTokenModule(_tokenAddress, _whitelistAddress, _allowOperators, _allowAts);
         instance.transferOwnership(msg.sender);
         addInstance(instance);
         // attach module to token
