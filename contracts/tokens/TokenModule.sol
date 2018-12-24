@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../utils/Ownable.sol";
 import "./SecurityToken.sol";
 
 contract TransferValidatorTokenModule {
@@ -20,17 +20,17 @@ contract TransferValidatorTokenModule {
     // 0xAA Transfer Blocked - Negative amount
     // 0xAF Transfer Verified - Forced
 
-    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data)
-    public view returns (byte, string);
+    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes memory data)
+    public view returns (byte, string memory);
 }
 
 contract TransferListenerTokenModule {
-    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data)
+    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes memory data)
     public;
 }
 
 contract TranchesManagerTokenModule {
-    function calculateDestinationTranche(bytes32 currentDestinationTranche, bytes32 sourceTranche, address from, uint256 amount, bytes data)
+    function calculateDestinationTranche(bytes32 currentDestinationTranche, bytes32 sourceTranche, address from, uint256 amount, bytes memory data)
     public view returns(bytes32);
 }
 
@@ -57,12 +57,12 @@ contract TokenModule is Ownable {
         _;
     }
 
-    constructor(address _tokenAddress, string _moduleType)
+    constructor(address _tokenAddress, string memory _moduleType)
     public
     {
         tokenAddress = _tokenAddress;
         moduleType = _moduleType;
     }
 
-    function getFeatures() public view returns(Feature[]);
+    function getFeatures() public view returns(Feature[] memory);
 }

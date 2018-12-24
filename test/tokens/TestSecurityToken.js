@@ -17,11 +17,11 @@ contract('SecurityTokenFactory', async(accounts) => {
     let investor2 = accounts[4];
     let investor3 = accounts[5];
 
-    let trancheUnrestricted = padBytes32(web3.fromUtf8('unrestricted'));
-    let trancheLocked = padBytes32(web3.fromUtf8('locked'));
+    let trancheUnrestricted = padBytes32(web3.utils.fromUtf8('unrestricted'));
+    let trancheLocked = padBytes32(web3.utils.fromUtf8('locked'));
 
-    let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
-    let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
+    let dataIssuing = padBytes32(web3.utils.fromUtf8('issuing'));
+    let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
 
     it('create token', async() => {
         let factory = await SecurityTokenFactory.deployed();

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.5.0;
 
 import "../utils/Factory.sol";
 
@@ -63,7 +63,7 @@ contract MultiSigWallet {
     }
 
     modifier transactionExists(uint transactionId) {
-        require(transactions[transactionId].destination != 0);
+        require(transactions[transactionId].destination != address(0));
         _;
     }
 
@@ -83,7 +83,7 @@ contract MultiSigWallet {
     }
 
     modifier notNull(address _address) {
-        require(_address != 0);
+        require(_address != address(0));
         _;
     }
 
@@ -97,7 +97,7 @@ contract MultiSigWallet {
 
     /// @dev Fallback function allows to deposit ether.
     function()
-    public payable
+    external payable
     {
         if (msg.value > 0)
             emit Deposit(msg.sender, msg.value);
@@ -109,12 +109,12 @@ contract MultiSigWallet {
     /// @dev Contract constructor sets initial owners and required number of confirmations.
     /// @param _owners List of initial owners.
     /// @param _required Number of required confirmations.
-    constructor(address[] _owners, uint _required)
+    constructor(address[] memory _owners, uint _required)
     public
     validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            require(!isOwner[_owners[i]] && _owners[i] != 0);
+            require(!isOwner[_owners[i]] && _owners[i] != address(0));
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -190,7 +190,7 @@ contract MultiSigWallet {
     /// @param value Transaction ether value.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes data)
+    function submitTransaction(address destination, uint value, bytes memory data)
     public
     returns (uint transactionId)
     {
@@ -245,7 +245,7 @@ contract MultiSigWallet {
 
     // call has been separated into its own function in order to take advantage
     // of the Solidity's code generator to produce a loop that copies tx.data into memory.
-    function external_call(address destination, uint value, uint dataLength, bytes data) private returns (bool) {
+    function external_call(address destination, uint value, uint dataLength, bytes memory data) private returns (bool) {
         bool result;
         assembly {
             let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
@@ -270,7 +270,7 @@ contract MultiSigWallet {
     /// @return Confirmation status.
     function isConfirmed(uint transactionId)
     public
-    constant
+    view
     returns (bool)
     {
         uint count = 0;
@@ -290,7 +290,7 @@ contract MultiSigWallet {
     /// @param value Transaction ether value.
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
-    function addTransaction(address destination, uint value, bytes data)
+    function addTransaction(address destination, uint value, bytes memory data)
     internal
     notNull(destination)
     returns (uint transactionId)
@@ -314,7 +314,7 @@ contract MultiSigWallet {
     /// @return Number of confirmations.
     function getConfirmationCount(uint transactionId)
     public
-    constant
+    view
     returns (uint count)
     {
         for (uint i=0; i<owners.length; i++)
@@ -328,7 +328,7 @@ contract MultiSigWallet {
     /// @return Total number of transactions after filters are applied.
     function getTransactionCount(bool pending, bool executed)
     public
-    constant
+    view
     returns (uint count)
     {
         for (uint i=0; i<transactionCount; i++)
@@ -341,8 +341,8 @@ contract MultiSigWallet {
     /// @return List of owner addresses.
     function getOwners()
     public
-    constant
-    returns (address[])
+    view
+    returns (address[] memory)
     {
         return owners;
     }
@@ -352,8 +352,8 @@ contract MultiSigWallet {
     /// @return Returns array of owner addresses.
     function getConfirmations(uint transactionId)
     public
-    constant
-    returns (address[] _confirmations)
+    view
+    returns (address[] memory _confirmations)
     {
         address[] memory confirmationsTemp = new address[](owners.length);
         uint count = 0;
@@ -376,8 +376,8 @@ contract MultiSigWallet {
     /// @return Returns array of transaction IDs.
     function getTransactionIds(uint from, uint to, bool pending, bool executed)
     public
-    constant
-    returns (uint[] _transactionIds)
+    view
+    returns (uint[] memory _transactionIds)
     {
         uint[] memory transactionIdsTemp = new uint[](transactionCount);
         uint count = 0;
@@ -396,11 +396,11 @@ contract MultiSigWallet {
 }
 
 contract MultiSigWalletFactory is Factory {
-    function createInstance(address[] _owners, uint _required)
+    function createInstance(address[] memory _owners, uint _required)
     public returns(address)
     {
         MultiSigWallet instance = new MultiSigWallet(_owners, _required);
-        addInstance(instance);
-        return instance;
+        addInstance(address(instance));
+        return address(instance);
     }
 }

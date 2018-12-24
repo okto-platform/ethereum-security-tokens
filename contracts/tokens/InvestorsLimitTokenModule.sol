@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../utils/SafeMath.sol";
 import "../utils/Factory.sol";
 import "./TokenModule.sol";
 import "../whitelists/Whitelist.sol";
@@ -27,7 +27,7 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[])
+    public view returns(TokenModule.Feature[] memory)
     {
         TokenModule.Feature[] memory features = new TokenModule.Feature[](2);
         features[0] = TokenModule.Feature.TransferValidator;
@@ -35,8 +35,8 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
         return features;
     }
 
-    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256 amount, bytes)
-    public view returns (byte, string)
+    function validateTransfer(bytes32, bytes32, address, address from, address to, uint256 amount, bytes memory)
+    public view returns (byte, string memory)
     {
         SecurityToken token = SecurityToken(tokenAddress);
         uint256 diff;
@@ -72,7 +72,7 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
         return (0xA1, "Approved");
     }
 
-    function transferDone(bytes32, bytes32, address, address from, address to, uint256 amount, bytes)
+    function transferDone(bytes32, bytes32, address, address from, address to, uint256 amount, bytes memory)
     public
     {
         SecurityToken token = SecurityToken(tokenAddress);
@@ -140,14 +140,14 @@ contract InvestorsLimitTokenModuleFactory is Factory {
     {
         InvestorsLimitTokenModule instance = new InvestorsLimitTokenModule(_tokenAddress, _limit, _whitelistAddress, _investorIdProperty);
         instance.transferOwnership(msg.sender);
-        addInstance(instance);
+        addInstance(address(instance));
         // attach module to token
         SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(instance);
+        token.addModule(address(instance));
         if (_whitelistAddress != address(0)) {
             Whitelist whitelist = Whitelist(_whitelistAddress);
-            whitelist.addModule(instance);
+            whitelist.addModule(address(instance));
         }
-        return instance;
+        return address(instance);
     }
 }

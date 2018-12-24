@@ -20,11 +20,11 @@ contract('SupplyLimitTokenModuleFactory', async(accounts) => {
     let investor2 = accounts[4];
     let investor3 = accounts[5];
 
-    let trancheUnrestricted = padBytes32(web3.fromUtf8('unrestricted'));
-    let trancheLocked = padBytes32(web3.fromUtf8('locked'));
+    let trancheUnrestricted = padBytes32(web3.utils.fromUtf8('unrestricted'));
+    let trancheLocked = padBytes32(web3.utils.fromUtf8('locked'));
 
-    let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
-    let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
+    let dataIssuing = padBytes32(web3.utils.fromUtf8('issuing'));
+    let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
 
 
     it('configure module', async() => {
@@ -38,13 +38,13 @@ contract('SupplyLimitTokenModuleFactory', async(accounts) => {
         let modulesCount = await moduleFactory.getInstancesCount.call();
         moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
 
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.release({from: owner});
     });
 
 
     it('do not allow to exceed supply limit', async() => {
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
 
         await token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1});
         await token.issueByTranche(trancheUnrestricted, investor2, 2000, dataIssuing, {from: operator1});
@@ -55,14 +55,14 @@ contract('SupplyLimitTokenModuleFactory', async(accounts) => {
 
 
     it('redeem tokens and issue again', async() => {
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.burnByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, {from: operator1});
         await token.issueByTranche(trancheUnrestricted, investor3, 1000, dataIssuing, {from: operator1});
     });
 
 
     it('allow to transfer tokens when we are in the limit of supply', async() => {
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.transferByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, {from: investor3});
     });
 });

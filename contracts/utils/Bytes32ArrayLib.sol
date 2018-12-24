@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 library Bytes32ArrayLib {
     function contains(bytes32[] storage array, bytes32 value)
@@ -125,7 +125,7 @@ contract Bytes32ArrayLibTest {
     }
 
     function getArray()
-    public view returns(bytes32[])
+    public view returns(bytes32[] memory)
     {
         return array;
     }

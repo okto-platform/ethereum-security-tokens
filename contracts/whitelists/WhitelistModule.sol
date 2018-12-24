@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../utils/Ownable.sol";
 
 contract WhitelistModule is Ownable {
     address public whitelistAddress;
@@ -11,7 +11,7 @@ contract WhitelistModule is Ownable {
         _;
     }
 
-    constructor(address _whitelistAddress, string _moduleType)
+    constructor(address _whitelistAddress, string memory _moduleType)
     public
     {
         whitelistAddress = _whitelistAddress;

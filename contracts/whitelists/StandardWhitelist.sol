@@ -1,6 +1,6 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../utils/Ownable.sol";
 import "../utils/Factory.sol";
 import "./Whitelist.sol";
 
@@ -26,7 +26,7 @@ import "./Whitelist.sol";
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 contract StandardWhitelist is Whitelist {
-    constructor(address tokenAddress, address[] validators, bytes32[] codes, bytes32[] buckets, uint8[] froms, uint16[] lens)
+    constructor(address tokenAddress, address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
     Whitelist(tokenAddress, validators, codes, buckets, froms, lens)
     public
     {
@@ -91,12 +91,12 @@ contract StandardWhitelist is Whitelist {
 }
 
 contract StandardWhitelistFactory is Factory {
-    function createInstance(address tokenAddress, address[] validators, bytes32[] codes, bytes32[] buckets, uint8[] froms, uint16[] lens)
+    function createInstance(address tokenAddress, address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
     public returns(address)
     {
         StandardWhitelist instance = new StandardWhitelist(tokenAddress, validators, codes, buckets, froms, lens);
         instance.transferOwnership(msg.sender);
-        addInstance(instance);
-        return instance;
+        addInstance(address(instance));
+        return address(instance);
     }
 }

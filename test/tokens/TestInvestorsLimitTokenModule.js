@@ -20,11 +20,13 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
     let investor2 = accounts[4];
     let investor3 = accounts[5];
 
-    let trancheUnrestricted = padBytes32(web3.fromUtf8('unrestricted'));
-    let trancheLocked = padBytes32(web3.fromUtf8('locked'));
+    let trancheUnrestricted = padBytes32(web3.utils.fromUtf8('unrestricted'));
+    let trancheLocked = padBytes32(web3.utils.fromUtf8('locked'));
 
-    let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
-    let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
+    let dataIssuing = padBytes32(web3.utils.fromUtf8('issuing'));
+    let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
+
+    let nullAddress = '0x0000000000000000000000000000000000000000';
 
 
     it('configure module', async() => {
@@ -34,18 +36,18 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
         tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
 
         let moduleFactory = await InvestorsLimitTokenModuleFactory.deployed();
-        await moduleFactory.createInstance(tokenAddress, 2, '0x0', '0x0', {from: owner});
+        await moduleFactory.createInstance(tokenAddress, 2, nullAddress, nullAddress, {from: owner});
         let modulesCount = await moduleFactory.getInstancesCount.call();
         moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
 
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.release({from: owner});
     });
 
 
     it('do not allow to exceed number of investors', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = InvestorsLimitTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await InvestorsLimitTokenModule.at(moduleAddress);
 
         await token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1});
         let numberOfInvestors = await module.numberOfInvestors.call();
@@ -60,14 +62,14 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
 
 
     it('decrease number of investors when there are no more tokens', async() => {
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.burnByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, {from: operator1});
         await token.issueByTranche(trancheUnrestricted, investor3, 1000, dataIssuing, {from: operator1});
     });
 
 
     it('allow to transfer all tokens to another investor', async() => {
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.transferByTranche(trancheUnrestricted, investor1, 1000, dataUserTransfer, {from: investor3});
     });
 });

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../whitelists/Whitelist.sol";
 import "../utils/Factory.sol";
@@ -23,7 +23,7 @@ contract RestrictSenderTokenModule is TransferValidatorTokenModule,TokenModule {
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[])
+    public view returns(TokenModule.Feature[] memory)
     {
         TokenModule.Feature[] memory features = new TokenModule.Feature[](1);
         features[0] = TokenModule.Feature.TransferValidator;
@@ -31,13 +31,13 @@ contract RestrictSenderTokenModule is TransferValidatorTokenModule,TokenModule {
     }
 
 
-    function validateTransfer(bytes32, bytes32, address operator, address from, address, uint256, bytes)
-    public view returns (byte, string)
+    function validateTransfer(bytes32, bytes32, address operator, address from, address, uint256, bytes memory)
+    public view returns (byte, string memory)
     {
         Whitelist whitelist = Whitelist(whitelistAddress);
         if (
             allowOperators && operator != address(0) ||
-            allowAts && operator == address(0) && whitelist.getProperty(from, ATS_PROP) == 1
+            allowAts && operator == address(0) && whitelist.getProperty(from, ATS_PROP) == bytes32(uint256(1))
         ) {
             return (0xA1, "Approved");
         } else {
@@ -52,10 +52,10 @@ contract RestrictSenderTokenModuleFactory is Factory {
     {
         RestrictSenderTokenModule instance = new RestrictSenderTokenModule(_tokenAddress, _whitelistAddress, _allowOperators, _allowAts);
         instance.transferOwnership(msg.sender);
-        addInstance(instance);
+        addInstance(address(instance));
         // attach module to token
         SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(instance);
-        return instance;
+        token.addModule(address(instance));
+        return address(instance);
     }
 }

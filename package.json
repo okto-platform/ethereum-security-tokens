@@ -16,7 +16,6 @@
   "license": "MIT",
   "homepage": "https://github.com/slingr-stack/slingr-security-tokens#readme",
   "dependencies": {
-    "openzeppelin-solidity": "1.12.0",
     "truffle-assertions": "^0.6.1",
     "truffle-hdwallet-provider": "0.0.6"
   }

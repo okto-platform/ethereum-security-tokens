@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 library AddressArrayLib {
     function contains(address[] storage array, address value)
@@ -125,7 +125,7 @@ contract AddressArrayLibTest {
     }
 
     function getArray()
-    public view returns(address[])
+    public view returns(address[] memory)
     {
         return array;
     }

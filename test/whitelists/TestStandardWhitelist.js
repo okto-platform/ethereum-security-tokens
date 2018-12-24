@@ -11,14 +11,14 @@ let padBytes32 = function(value) {
 // KYC flag                           index   0, length   1 bits
 // KYC expiration timestamp           index   1, length  40 bits
 // Country code (two letters code)    index  41, length  16 bits
-let generalBucket      = web3.fromUtf8('general');
-let propKyc            = web3.fromUtf8('kyc');
-let propKycExpiration  = web3.fromUtf8('kycExpiration');
-let propAccredited     = web3.fromUtf8('accredited');
-let propAccreditedExpiration  = web3.fromUtf8('accreditedExpiration');
-let propCountry        = web3.fromUtf8('country');
-let propInsider        = web3.fromUtf8('insider');
-let propAts            = web3.fromUtf8('ats');
+let generalBucket      = web3.utils.fromUtf8('general');
+let propKyc            = web3.utils.fromUtf8('kyc');
+let propKycExpiration  = web3.utils.fromUtf8('kycExpiration');
+let propAccredited     = web3.utils.fromUtf8('accredited');
+let propAccreditedExpiration  = web3.utils.fromUtf8('accreditedExpiration');
+let propCountry        = web3.utils.fromUtf8('country');
+let propInsider        = web3.utils.fromUtf8('insider');
+let propAts            = web3.utils.fromUtf8('ats');
 let props = {};
 props[propKyc] = {from: 0, len: 1};
 props[propKycExpiration] = {from: 1, len: 40};

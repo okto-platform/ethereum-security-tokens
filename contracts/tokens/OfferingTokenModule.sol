@@ -1,8 +1,8 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../utils/Factory.sol";
 import "./TokenModule.sol";
-import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
+import "../utils/Pausable.sol";
 
 contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausable {
     uint256 public start;
@@ -17,14 +17,14 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[])
+    public view returns(TokenModule.Feature[] memory)
     {
         TokenModule.Feature[] memory features = new TokenModule.Feature[](1);
         features[0] = TokenModule.Feature.TransferValidator;
         return features;
     }
 
-    function issueTokens(bytes32[] tranches, address[] investors, uint256[] amounts)
+    function issueTokens(bytes32[] memory tranches, address[] memory investors, uint256[] memory amounts)
     onlyTokenOperator whenNotPaused
     public
     {
@@ -45,7 +45,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         }
     }
 
-    function reserveTokens(bytes32[] tranches, address[] investors, uint256[] amounts)
+    function reserveTokens(bytes32[] memory tranches, address[] memory investors, uint256[] memory amounts)
     onlyTokenOwner whenNotPaused
     public
     {
@@ -65,8 +65,8 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         }
     }
 
-    function validateTransfer(bytes32, bytes32, address, address from, address, uint256, bytes data)
-    public view returns (byte, string)
+    function validateTransfer(bytes32, bytes32, address, address from, address, uint256, bytes memory data)
+    public view returns (byte, string memory)
     {
         if (from == address(0)) {
             // if this is a token reservation (only done by the owner of the token) we don't perform this validation
@@ -102,10 +102,10 @@ contract OfferingTokenModuleFactory is Factory {
     {
         OfferingTokenModule instance = new OfferingTokenModule(_tokenAddress, _start, _end);
         instance.transferOwnership(msg.sender);
-        addInstance(instance);
+        addInstance(address(instance));
         // attach module to token
         SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(instance);
-        return instance;
+        token.addModule(address(instance));
+        return address(instance);
     }
 }

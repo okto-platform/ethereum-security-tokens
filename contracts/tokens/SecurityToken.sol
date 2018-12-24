@@ -1,9 +1,9 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../utils/SafeMath.sol";
+import "../utils/Ownable.sol";
 import "../utils/Factory.sol";
-import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
+import "../utils/Pausable.sol";
 import "../utils/Bytes32ArrayLib.sol";
 import "../utils/AddressArrayLib.sol";
 import "./TokenModule.sol";
@@ -37,13 +37,13 @@ contract ISecurityToken is Pausable {
 
     // Tokens handling
     function balanceOfByTranche(bytes32 tranche, address tokenHolder) public view returns (uint256);
-    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes data) public view returns(bytes32);
-    function canTransfer(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data) public view returns (byte, string, bytes32);
-    function transferByTranche(bytes32 tranche, address to, uint256 amount, bytes data) public returns (bytes32);
-    function operatorTransferByTranche(bytes32 tranche, address from, address to, uint256 amount, bytes data) public returns (bytes32);
-    function tranchesOf(address tokenHolder) public view returns (bytes32[]);
-    function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data) public;
-    function burnByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data) public;
+    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes memory data) public view returns(bytes32);
+    function canTransfer(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes memory data) public view returns (byte, string memory, bytes32);
+    function transferByTranche(bytes32 tranche, address to, uint256 amount, bytes memory data) public returns (bytes32);
+    function operatorTransferByTranche(bytes32 tranche, address from, address to, uint256 amount, bytes memory data) public returns (bytes32);
+    function tranchesOf(address tokenHolder) public view returns (bytes32[] memory);
+    function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes memory data) public;
+    function burnByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes memory data) public;
 
     // Events
     event AddedModule(address moduleAddress, string moduleType);
@@ -110,7 +110,7 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    constructor(string _name, string _symbol, uint8 _decimals, address[] _operators)
+    constructor(string memory _name, string memory _symbol, uint8 _decimals, address[] memory _operators)
     public
     {
         name = _name;
@@ -224,7 +224,7 @@ contract SecurityToken is ISecurityToken {
         return balancesPerTranche[tokenHolder][tranche];
     }
 
-    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes data)
+    function getDestinationTranche(bytes32 sourceTranche, address from, uint256 amount, bytes memory data)
     public view returns(bytes32)
     {
         // the default implementation is to transfer to the same tranche
@@ -237,8 +237,8 @@ contract SecurityToken is ISecurityToken {
         return destinationTranche;
     }
 
-    function canTransfer(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data)
-    public view returns (byte result, string message, bytes32 destinationTranche)
+    function canTransfer(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes memory data)
+    public view returns (byte result, string memory message, bytes32 destinationTranche)
     {
         destinationTranche = getDestinationTranche(tranche, to, amount, data);
 
@@ -262,7 +262,7 @@ contract SecurityToken is ISecurityToken {
         }
     }
 
-    function transferByTranche(bytes32 tranche, address to, uint256 amount, bytes data)
+    function transferByTranche(bytes32 tranche, address to, uint256 amount, bytes memory data)
     isReleased whenNotPaused
     public returns (bytes32)
     {
@@ -271,7 +271,7 @@ contract SecurityToken is ISecurityToken {
         return internalTransferByTranche(tranche, address(0), msg.sender, to, amount, data);
     }
 
-    function operatorTransferByTranche(bytes32 tranche, address from, address to, uint256 amount, bytes data)
+    function operatorTransferByTranche(bytes32 tranche, address from, address to, uint256 amount, bytes memory data)
     isReleased whenNotPaused
     public returns (bytes32)
     {
@@ -281,7 +281,7 @@ contract SecurityToken is ISecurityToken {
         return internalTransferByTranche(tranche, msg.sender, from, to, amount, data);
     }
 
-    function internalTransferByTranche(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data)
+    function internalTransferByTranche(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes memory data)
     internal returns (bytes32)
     {
         require(amount <= balancesPerTranche[from][tranche], "Insufficient funds in tranche");
@@ -316,12 +316,12 @@ contract SecurityToken is ISecurityToken {
     }
 
     function tranchesOf(address tokenHolder)
-    public view returns (bytes32[])
+    public view returns (bytes32[] memory)
     {
         return tranches[tokenHolder];
     }
 
-    function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data)
+    function issueByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes memory data)
     isReleased whenNotPaused
     public
     {
@@ -344,7 +344,7 @@ contract SecurityToken is ISecurityToken {
     }
 
 
-    function burnByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes data)
+    function burnByTranche(bytes32 tranche, address tokenHolder, uint256 amount, bytes memory data)
     isReleased whenNotPaused
     public
     {
@@ -368,7 +368,7 @@ contract SecurityToken is ISecurityToken {
         notifyTransfer(tranche, bytes32(0), msg.sender, tokenHolder, address(0), amount, data);
     }
 
-    function verifyCanTransferOrRevert(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes data)
+    function verifyCanTransferOrRevert(bytes32 tranche, address operator, address from, address to, uint256 amount, bytes memory data)
     internal view
     {
         byte code;
@@ -381,7 +381,7 @@ contract SecurityToken is ISecurityToken {
         }
     }
 
-    function notifyTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes data)
+    function notifyTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes memory data)
     internal
     {
         TransferListenerTokenModule transferListener;
@@ -394,12 +394,12 @@ contract SecurityToken is ISecurityToken {
 
 
 contract SecurityTokenFactory is Factory {
-    function createInstance(string name, string symbol, uint8 decimals, address[] operators)
+    function createInstance(string memory name, string memory symbol, uint8 decimals, address[] memory operators)
     public returns(address)
     {
         SecurityToken instance = new SecurityToken(name, symbol, decimals, operators);
         instance.transferOwnership(msg.sender);
-        addInstance(instance);
-        return instance;
+        addInstance(address(instance));
+        return address(instance);
     }
 }

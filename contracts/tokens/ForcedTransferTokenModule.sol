@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../utils/Factory.sol";
 import "./TokenModule.sol";
@@ -23,7 +23,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[])
+    public view returns(TokenModule.Feature[] memory)
     {
         TokenModule.Feature[] memory features = new TokenModule.Feature[](2);
         features[0] = TokenModule.Feature.TransferValidator;
@@ -72,8 +72,8 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
         }
     }
 
-    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes)
-    public view returns (byte, string)
+    function validateTransfer(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes memory)
+    public view returns (byte, string memory)
     {
         if (numberOfPendingTransfers > 0) {
             bytes memory hashBytes = abi.encodePacked(fromTranche, toTranche, operator, from, to, amount);
@@ -88,7 +88,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
         return (0xA1, "Approved");
     }
 
-    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes)
+    function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes memory)
     public
     {
         if (numberOfPendingTransfers == 0) {
@@ -115,10 +115,10 @@ contract ForcedTransferTokenModuleFactory is Factory {
     {
         ForcedTransferTokenModule instance = new ForcedTransferTokenModule(_tokenAddress);
         instance.transferOwnership(msg.sender);
-        addInstance(instance);
+        addInstance(address(instance));
         // attach module to token
         SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(instance);
-        return instance;
+        token.addModule(address(instance));
+        return address(instance);
     }
 }

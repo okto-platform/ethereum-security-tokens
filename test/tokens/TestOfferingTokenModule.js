@@ -14,7 +14,7 @@ const increaseTime = function(duration) {
     const id = Date.now()
 
     return new Promise((resolve, reject) => {
-        web3.currentProvider.sendAsync({
+        web3.currentProvider.send({
             jsonrpc: '2.0',
             method: 'evm_increaseTime',
             params: [duration],
@@ -22,7 +22,7 @@ const increaseTime = function(duration) {
         }, err1 => {
             if (err1) return reject(err1)
 
-            web3.currentProvider.sendAsync({
+            web3.currentProvider.send({
                 jsonrpc: '2.0',
                 method: 'evm_mine',
                 id: id+1,
@@ -48,12 +48,12 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
     let companyWallet = accounts[6];
     let employeesWallet = accounts[7];
 
-    let trancheUnrestricted = padBytes32(web3.fromUtf8('unrestricted'));
-    let trancheLocked = padBytes32(web3.fromUtf8('locked'));
+    let trancheUnrestricted = padBytes32(web3.utils.fromUtf8('unrestricted'));
+    let trancheLocked = padBytes32(web3.utils.fromUtf8('locked'));
 
-    let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
-    let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
-    let dataOperatorTransfer = padBytes32(web3.fromUtf8('operatorTransfer'));
+    let dataIssuing = padBytes32(web3.utils.fromUtf8('issuing'));
+    let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
+    let dataOperatorTransfer = padBytes32(web3.utils.fromUtf8('operatorTransfer'));
 
 
     it('configure module', async() => {
@@ -73,14 +73,14 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
         let limitModuleFactory = await SupplyLimitTokenModuleFactory.deployed();
         await limitModuleFactory.createInstance(tokenAddress, 1000000, {from: owner});
 
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.release({from: owner});
     });
 
 
     it('cannot issue before offering starts', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = OfferingTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await OfferingTokenModule.at(moduleAddress);
 
         await truffleAssert.reverts(module.issueTokens([trancheUnrestricted], [investor1], [1000], {from: operator1}));
         await truffleAssert.reverts(token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1}));
@@ -88,8 +88,8 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
 
 
     it('can reserve tokens before offering starts', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = OfferingTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await OfferingTokenModule.at(moduleAddress);
 
         await module.reserveTokens(
             [trancheUnrestricted, trancheUnrestricted],
@@ -113,8 +113,8 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
 
 
     it('can issue tokens during offering', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = OfferingTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await OfferingTokenModule.at(moduleAddress);
 
         // increase time so offer is in progress
         await increaseTime(6 * 24 * 60 * 60);
@@ -133,16 +133,16 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
 
 
     it('cannot reserve tokens once the offering is started', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = OfferingTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await OfferingTokenModule.at(moduleAddress);
 
         await truffleAssert.reverts(module.reserveTokens([trancheUnrestricted], [investor1], [1000], {from: owner}));
     });
 
 
     it('verify error handling', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = OfferingTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await OfferingTokenModule.at(moduleAddress);
 
         let result = await module.issueTokens(
             [trancheUnrestricted, trancheUnrestricted, trancheUnrestricted],
@@ -166,8 +166,8 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
 
 
     it('cannot issue tokens if offering is paused', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = OfferingTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await OfferingTokenModule.at(moduleAddress);
 
         await module.pause({from: owner});
 
@@ -179,8 +179,8 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
 
 
     it('cannot issue more tokens after offering is finished', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = OfferingTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await OfferingTokenModule.at(moduleAddress);
 
         // increase time so offer is finished
         await increaseTime(6 * 24 * 60 * 60);

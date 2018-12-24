@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "../utils/Factory.sol";
 import "./TokenModule.sol";
@@ -14,7 +14,7 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[])
+    public view returns(TokenModule.Feature[] memory)
     {
         TokenModule.Feature[] memory features = new TokenModule.Feature[](1);
         features[0] = TokenModule.Feature.TransferValidator;
@@ -22,8 +22,8 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     }
 
 
-    function validateTransfer(bytes32, bytes32, address, address from, address, uint256 amount, bytes)
-    public view returns (byte, string)
+    function validateTransfer(bytes32, bytes32, address, address from, address, uint256 amount, bytes memory)
+    public view returns (byte, string memory)
     {
         if (from == address(0)) {
             // this is an issuance of tokens
@@ -42,10 +42,10 @@ contract SupplyLimitTokenModuleFactory is Factory {
     {
         SupplyLimitTokenModule instance = new SupplyLimitTokenModule(_tokenAddress, _limit);
         instance.transferOwnership(msg.sender);
-        addInstance(instance);
+        addInstance(address(instance));
         // attach module to token
         SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(instance);
-        return instance;
+        token.addModule(address(instance));
+        return address(instance);
     }
 }

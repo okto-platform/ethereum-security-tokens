@@ -27,14 +27,14 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
     let investor2 = accounts[4];
     let investor3 = accounts[5];
 
-    let trancheUnrestricted = padBytes32(web3.fromUtf8('unrestricted'));
-    let trancheLocked = padBytes32(web3.fromUtf8('locked'));
+    let trancheUnrestricted = padBytes32(web3.utils.fromUtf8('unrestricted'));
+    let trancheLocked = padBytes32(web3.utils.fromUtf8('locked'));
 
-    let dataIssuing = padBytes32(web3.fromUtf8('issuing'));
-    let dataUserTransfer = padBytes32(web3.fromUtf8('userTransfer'));
+    let dataIssuing = padBytes32(web3.utils.fromUtf8('issuing'));
+    let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
 
-    let generalBucket = web3.fromUtf8('general');
-    let propKyc = web3.fromUtf8('kyc');
+    let generalBucket = web3.utils.fromUtf8('general');
+    let propKyc = web3.utils.fromUtf8('kyc');
 
     it('configure module', async() => {
         let tokenFactory = await SecurityTokenFactory.deployed();
@@ -59,17 +59,17 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
         let keyModulesCount = await keyModuleFactory.getInstancesCount.call();
         keyModuleAddress = await keyModuleFactory.getInstance.call(keyModulesCount - 1);
 
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.release({from: owner});
     });
 
 
     it('force transfer that is not allowed by default', async() => {
-        let whitelist = StandardWhitelist.at(whitelistAddress);
+        let whitelist = await StandardWhitelist.at(whitelistAddress);
         await whitelist.setBucket(investor1, generalBucket, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
         await whitelist.setBucket(investor2, generalBucket, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
 
-        let token = SecurityToken.at(tokenAddress);
+        let token = await SecurityToken.at(tokenAddress);
         await token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1});
         await token.issueByTranche(trancheUnrestricted, investor2, 2000, dataIssuing, {from: operator1});
 
@@ -77,7 +77,7 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
         await truffleAssert.reverts(token.transferByTranche(trancheUnrestricted, investor3, 500, dataIssuing, {from: investor1}));
 
         // force transfer and check if it can be sent
-        let module = ForcedTransferTokenModule.at(moduleAddress);
+        let module = await ForcedTransferTokenModule.at(moduleAddress);
         await module.approveForcedTransfer(trancheUnrestricted, trancheUnrestricted, operator1, investor1, investor3, 500, {from: owner});
         let result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xaf', 'Transfer is not forced');
@@ -103,8 +103,8 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
 
 
     it('revoke forced transfer', async() => {
-        let token = SecurityToken.at(tokenAddress);
-        let module = ForcedTransferTokenModule.at(moduleAddress);
+        let token = await SecurityToken.at(tokenAddress);
+        let module = await ForcedTransferTokenModule.at(moduleAddress);
         await module.approveForcedTransfer(trancheUnrestricted, trancheUnrestricted, operator1, investor1, investor3, 500, {from: owner});
         let result = await token.canTransfer.call(trancheUnrestricted, operator1, investor1, investor3, 500, dataUserTransfer);
         assert.equal(result[0], '0xaf', 'Transfer is not forced');
@@ -116,7 +116,7 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
 
 
     it('only token owner can force a transfer', async() => {
-        let module = ForcedTransferTokenModule.at(moduleAddress);
+        let module = await ForcedTransferTokenModule.at(moduleAddress);
         await truffleAssert.reverts(module.approveForcedTransfer(trancheUnrestricted, trancheUnrestricted, operator1, investor1, investor3, 500, {from: operator2}));
     });
 });
