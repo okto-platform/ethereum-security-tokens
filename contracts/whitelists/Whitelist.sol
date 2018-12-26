@@ -4,8 +4,9 @@ import "../utils/Ownable.sol";
 import "../utils/Factory.sol";
 import "../utils/AddressArrayLib.sol";
 import "./WhitelistModule.sol";
+import "./IWhitelist.sol";
 
-contract Whitelist is Ownable {
+contract Whitelist is IWhitelist {
     using AddressArrayLib for address[];
 
     struct Property {
@@ -15,7 +16,6 @@ contract Whitelist is Ownable {
         uint16 len;
     }
 
-    address[] public validators;
     mapping(address => mapping (bytes32 => bytes32)) properties;
     mapping(bytes32 => Property) propertiesDefinition;
     address[] internal modules;

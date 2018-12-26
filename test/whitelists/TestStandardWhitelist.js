@@ -8,21 +8,25 @@ let padBytes32 = function(value) {
     return value.padEnd(66, '0');
 };
 
-// KYC flag                           index   0, length   1 bits
-// KYC expiration timestamp           index   1, length  40 bits
-// Country code (two letters code)    index  41, length  16 bits
-let generalBucket      = web3.utils.fromUtf8('general');
-let propKyc            = web3.utils.fromUtf8('kyc');
-let propKycExpiration  = web3.utils.fromUtf8('kycExpiration');
-let propAccredited     = web3.utils.fromUtf8('accredited');
-let propAccreditedExpiration  = web3.utils.fromUtf8('accreditedExpiration');
-let propCountry        = web3.utils.fromUtf8('country');
-let propInsider        = web3.utils.fromUtf8('insider');
-let propAts            = web3.utils.fromUtf8('ats');
+// KYC status                         index   0, length   2 bits (00: pending, 01: auto-approved, 10: manually-approved, 11: disapproved)
+// KYC status updated                 index   2, length  40 bits
+// AML status                         index  42, length   2 bits (00: pending, 01: auto-approved, 10: manually-approved, 11: disapproved)
+// AML status updated                 index  44, length  40 bits
+// Accredited status                  index  84, length   3 bits (000: pending, 001: auto-approved, 010: manually-approved, 011: self-approved, 100: disapproved)
+// Accredited status updated          index  87, length  40 bits
+// Country code (two letters code)    index 127, length  16 bits (two letters ascii code lower case)
+let generalBucket                = web3.utils.fromUtf8('general');
+let propKycStatus                = web3.utils.fromUtf8('kycStatus');
+let propKycStatusUpdated         = web3.utils.fromUtf8('kycStatusUpdated');
+let propAccreditedStatus         = web3.utils.fromUtf8('accreditedStatus');
+let propAccreditedStatusUpdated  = web3.utils.fromUtf8('accreditedStatusUpdated');
+let propCountry                  = web3.utils.fromUtf8('country');
+let propInsider                  = web3.utils.fromUtf8('insider');
+let propAts                      = web3.utils.fromUtf8('ats');
 let props = {};
-props[propKyc] = {from: 0, len: 1};
-props[propKycExpiration] = {from: 1, len: 40};
-props[propCountry] = {from: 82, len: 16};
+props[propKycStatus] = {from: 0, len: 2};
+props[propKycStatusUpdated] = {from: 2, len: 40};
+props[propCountry] = {from: 127, len: 16};
 
 
 var Bytes32 = function(initBinaryVal) {
@@ -269,21 +273,13 @@ let getProperties = function(value, prop) {
 
 
 contract('StandardWhitelistFactory', async(accounts) => {
-    let tokenAddress;
     let owner = accounts[0];
     let validator = accounts[9];
     let investor1 = accounts[1];
 
-    it('configure token', async() => {
-        let factory = await SecurityTokenFactory.deployed();
-        await factory.createInstance('Token A', 'TOKA', 18, [owner], {from: owner});
-        let tokensCount = await factory.getInstancesCount.call();
-        tokenAddress = await factory.getInstance.call(tokensCount - 1);
-    });
-
     it('setting and checking string properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
@@ -308,54 +304,54 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
     it('setting and checking boolean properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
-        let props = packProperties(null, propKyc, Bytes32.fromBoolean(true));
+        let props = packProperties(null, propKycStatus, Bytes32.fromBoolean(true));
         await whitelist.setBucket(accounts[1], generalBucket, '0x'+props.toHex(), {from: validator});
-        props = packProperties(null, propKyc, Bytes32.fromBoolean(false));
+        props = packProperties(null, propKycStatus, Bytes32.fromBoolean(false));
         await whitelist.setBucket(accounts[2], generalBucket, '0x'+props.toHex(), {from: validator});
 
-        let result = await whitelist.getProperty.call(accounts[1], propKyc);
+        let result = await whitelist.getProperty.call(accounts[1], propKycStatus);
         assert.equal(Bytes32.fromHex(result.toString(16)).toBoolean(), true, 'kyc property was not set correctly');
 
-        result = await whitelist.getProperty.call(accounts[2], propKyc);
+        result = await whitelist.getProperty.call(accounts[2], propKycStatus);
         assert.equal(Bytes32.fromHex(result.toString(16)).toBoolean(), false, 'kyc property was not set correctly');
     });
 
 
     it('setting and checking number properties work', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
-        let props = packProperties(null, propKycExpiration, Bytes32.fromNumber(100));
+        let props = packProperties(null, propKycStatusUpdated, Bytes32.fromNumber(100));
         await whitelist.setBucket(accounts[1], generalBucket, '0x'+props.toHex(), {from: validator});
 
-        let result = await whitelist.getProperty.call(accounts[1], propKycExpiration);
+        let result = await whitelist.getProperty.call(accounts[1], propKycStatusUpdated);
         assert.equal(Bytes32.fromHex(result.toString(16)).toNumber(), 100, 'number property was not set correctly');
     });
 
 
     it('only validators can set properties', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
-        let props = packProperties(null, propKycExpiration, Bytes32.fromNumber(100));
+        let props = packProperties(null, propKycStatusUpdated, Bytes32.fromNumber(100));
         await truffleAssert.reverts(whitelist.setBucket(accounts[1], generalBucket, '0x'+props.toHex(), {from: accounts[2]}));
     });
 
 
     it('only owner can add properties', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
@@ -368,25 +364,28 @@ contract('StandardWhitelistFactory', async(accounts) => {
 
     it('ready properties', async() => {
         let factory = await StandardWhitelistFactory.deployed();
-        await factory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await factory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await factory.getInstancesCount.call();
         let whitelistAddress = await factory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
 
-        // kyc: 1, kycExpiration: 463723572224, accredited: 1, accreditedExpiration: 463723572224, insider: 0, ats: 0
-        await whitelist.setBucket(investor1, generalBucket, '0xb5fc0a16005afe050b001554cd7f028580000000000000000000000000000000', {from: validator});
-        let res = await whitelist.getProperty.call(investor1, propKyc);
+        // kycStatus: 01, kycStatusUpdated: 463723572224, accreditedStatus: 001, accreditedStatusUpdated: 463723572224, insider: 0, ats: 0, country: us
+        await whitelist.setBucket(investor1, generalBucket, '0x5AFE050B00000000000002D7F0285800EAE60000000000000000000000000000', {from: validator});
+        let res = await whitelist.getProperty.call(investor1, propKycStatus);
         assert.equal(res.valueOf(), 1, "KYC is invalid");
-        res = await whitelist.getProperty.call(investor1, propKycExpiration);
+        res = await whitelist.getProperty.call(investor1, propKycStatusUpdated);
         assert.equal(res.valueOf(), 463723572224, "KYC expiration is invalid");
-        res = await whitelist.getProperty.call(investor1, propAccredited);
+        res = await whitelist.getProperty.call(investor1, propAccreditedStatus);
         assert.equal(res.valueOf(), 1, "Accredited is invalid");
-        res = await whitelist.getProperty.call(investor1, propAccreditedExpiration);
+        res = await whitelist.getProperty.call(investor1, propAccreditedStatusUpdated);
         assert.equal(res.valueOf(), 463723572224, "Accredited expiration is invalid");
         res = await whitelist.getProperty.call(investor1, propInsider);
         assert.equal(res.valueOf(), 0, "Insider is invalid");
         res = await whitelist.getProperty.call(investor1, propAts);
         assert.equal(res.valueOf(), 0, "ATS is invalid");
+        res = await whitelist.getProperty.call(investor1, propCountry);
+        let country = Bytes32.fromHex(res.valueOf());
+        assert.equal(country.toStr(), 'us', "Country is invalid");
     });
 
 });

@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../utils/Ownable.sol";
 import "./SecurityToken.sol";
+import "../modules/Module.sol";
 
 contract TransferValidatorTokenModule {
 
@@ -34,9 +35,7 @@ contract TranchesManagerTokenModule {
     public view returns(bytes32);
 }
 
-contract TokenModule is Ownable {
-    enum Feature {TransferValidator, TransferListener, TranchesManager}
-
+contract TokenModule is Module {
     address public tokenAddress;
     string public moduleType;
 
@@ -63,6 +62,4 @@ contract TokenModule is Ownable {
         tokenAddress = _tokenAddress;
         moduleType = _moduleType;
     }
-
-    function getFeatures() public view returns(Feature[] memory);
 }

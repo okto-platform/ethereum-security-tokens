@@ -1,8 +1,9 @@
 pragma solidity ^0.5.0;
 
 import "../utils/Ownable.sol";
+import "../modules/Module.sol";
 
-contract WhitelistModule is Ownable {
+contract WhitelistModule is Module {
     address public whitelistAddress;
     string public moduleType;
 

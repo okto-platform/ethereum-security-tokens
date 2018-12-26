@@ -34,22 +34,23 @@ contract('RestrictSenderTokenModuleFactory', async(accounts) => {
 
 
     it('configure module', async() => {
-        let tokenFactory = await SecurityTokenFactory.deployed();
-        await tokenFactory.createInstance('Token A', 'TOKA', 18, [owner, operator1, operator2], {from: owner});
-        let tokensCount = await tokenFactory.getInstancesCount.call();
-        tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
-
         let whitelistFactory = await StandardWhitelistFactory.deployed();
-        await whitelistFactory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await whitelistFactory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await whitelistFactory.getInstancesCount.call();
         whitelistAddress = await whitelistFactory.getInstance.call(whitelistsCount - 1);
 
+        let tokenFactory = await SecurityTokenFactory.deployed();
+        await tokenFactory.createInstance('Token A', 'TOKA', 18, whitelistAddress, [owner, operator1, operator2], {from: owner});
+        let tokensCount = await tokenFactory.getInstancesCount.call();
+        tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
+
         let moduleFactory = await RestrictSenderTokenModuleFactory.deployed();
-        await moduleFactory.createInstance(tokenAddress, whitelistAddress, true, true, {from: owner});
+        await moduleFactory.createInstance(tokenAddress, true, true, {from: owner});
         let modulesCount = await moduleFactory.getInstancesCount.call();
         moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
 
         let token = await SecurityToken.at(tokenAddress);
+        await token.addModule(moduleAddress, {from: owner});
         await token.release({from: owner});
         await token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1});
         await token.issueByTranche(trancheLocked, investor1, 1500, dataIssuing, {from: operator1});
@@ -57,7 +58,7 @@ contract('RestrictSenderTokenModuleFactory', async(accounts) => {
         await token.issueByTranche(trancheLocked, investor2, 500, dataIssuing, {from: operator1});
 
         let whitelist = await StandardWhitelist.at(whitelistAddress);
-        await whitelist.setBucket(investor2, generalBucket, '0x0000000000000000000000000000000000100000000000000000000000000000'); // ats flag set
+        await whitelist.setBucket(investor2, generalBucket, '0x0000000000000000000000000000000000000000000000800000000000000000'); // ats flag set
     });
 
 

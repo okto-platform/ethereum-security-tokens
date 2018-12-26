@@ -1,7 +1,8 @@
 pragma solidity ^0.5.0;
 
 import "../utils/Factory.sol";
-import "./TokenModule.sol";
+import "../tokens/TokenModule.sol";
+import "./Module.sol";
 
 contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListenerTokenModule,TokenModule {
     struct ForcedTransfer {
@@ -23,11 +24,11 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[] memory)
+    public view returns(Module.Feature[] memory)
     {
-        TokenModule.Feature[] memory features = new TokenModule.Feature[](2);
-        features[0] = TokenModule.Feature.TransferValidator;
-        features[1] = TokenModule.Feature.TransferListener;
+        Module.Feature[] memory features = new Module.Feature[](2);
+        features[0] = Module.Feature.TransferValidator;
+        features[1] = Module.Feature.TransferListener;
         return features;
     }
 
@@ -89,6 +90,7 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
     }
 
     function transferDone(bytes32 fromTranche, bytes32 toTranche, address operator, address from, address to, uint256 amount, bytes memory)
+    onlyToken
     public
     {
         if (numberOfPendingTransfers == 0) {
@@ -110,15 +112,12 @@ contract ForcedTransferTokenModule is TransferValidatorTokenModule,TransferListe
 }
 
 contract ForcedTransferTokenModuleFactory is Factory {
-    function createInstance(address _tokenAddress)
+    function createInstance(address tokenAddress)
     public returns(address)
     {
-        ForcedTransferTokenModule instance = new ForcedTransferTokenModule(_tokenAddress);
+        ForcedTransferTokenModule instance = new ForcedTransferTokenModule(tokenAddress);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
-        // attach module to token
-        SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(address(instance));
         return address(instance);
     }
 }

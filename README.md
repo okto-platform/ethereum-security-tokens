@@ -100,11 +100,11 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[])
+    public view returns(Module.Feature[])
     {
-        TokenModule.Feature[] memory features = new TokenModule.Feature[](2);
-        features[0] = TokenModule.Feature.TransferValidator;
-        features[1] = TokenModule.Feature.TransferListener;
+        Module.Feature[] memory features = new Module.Feature[](2);
+        features[0] = Module.Feature.TransferValidator;
+        features[1] = Module.Feature.TransferListener;
         return features;
     }
 

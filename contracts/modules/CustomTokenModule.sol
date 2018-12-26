@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "./TokenModule.sol";
+import "../tokens/TokenModule.sol";
 
 contract CustomTokenModule is TokenModule {
     string public description;

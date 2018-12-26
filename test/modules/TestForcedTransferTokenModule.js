@@ -16,7 +16,7 @@ let padBytes32 = function(value) {
 contract('ForcedTransferTokenModuleFactory', async(accounts) => {
     let tokenAddress;
     let whitelistAddress;
-    let keyModuleAddress;
+    let kycModuleAddress;
     let moduleAddress;
 
     let owner = accounts[0];
@@ -34,18 +34,18 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
     let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
 
     let generalBucket = web3.utils.fromUtf8('general');
-    let propKyc = web3.utils.fromUtf8('kyc');
+    let propKyc = web3.utils.fromUtf8('kycStatus');
 
     it('configure module', async() => {
-        let tokenFactory = await SecurityTokenFactory.deployed();
-        await tokenFactory.createInstance('Token A', 'TOKA', 18, [owner, operator1, operator2], {from: owner});
-        let tokensCount = await tokenFactory.getInstancesCount.call();
-        tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
-
         let whitelistFactory = await StandardWhitelistFactory.deployed();
-        await whitelistFactory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await whitelistFactory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await whitelistFactory.getInstancesCount.call();
         whitelistAddress = await whitelistFactory.getInstance.call(whitelistsCount - 1);
+
+        let tokenFactory = await SecurityTokenFactory.deployed();
+        await tokenFactory.createInstance('Token A', 'TOKA', 18, whitelistAddress, [owner, operator1, operator2], {from: owner});
+        let tokensCount = await tokenFactory.getInstancesCount.call();
+        tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
 
         // the forced transfer module should go first
         let moduleFactory = await ForcedTransferTokenModuleFactory.deployed();
@@ -54,20 +54,23 @@ contract('ForcedTransferTokenModuleFactory', async(accounts) => {
         moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
 
         // we need to configure the kyc module so transfers fail by default
-        let keyModuleFactory = await KycTokenModuleFactory.deployed();
-        await keyModuleFactory.createInstance(tokenAddress, whitelistAddress, {from: owner});
-        let keyModulesCount = await keyModuleFactory.getInstancesCount.call();
-        keyModuleAddress = await keyModuleFactory.getInstance.call(keyModulesCount - 1);
+        let kycModuleFactory = await KycTokenModuleFactory.deployed();
+        await kycModuleFactory.createInstance(tokenAddress, {from: owner});
+        let kycModulesCount = await kycModuleFactory.getInstancesCount.call();
+        kycModuleAddress = await kycModuleFactory.getInstance.call(kycModulesCount - 1);
 
+        let whitelist = await StandardWhitelist.at(whitelistAddress);
         let token = await SecurityToken.at(tokenAddress);
+        await token.addModule(moduleAddress, {from: owner});
+        await token.addModule(kycModuleAddress, {from: owner});
         await token.release({from: owner});
     });
 
 
     it('force transfer that is not allowed by default', async() => {
         let whitelist = await StandardWhitelist.at(whitelistAddress);
-        await whitelist.setBucket(investor1, generalBucket, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
-        await whitelist.setBucket(investor2, generalBucket, '0x8000000000000000000000000000000000000000000000000000000000000000', {from: validator});
+        await whitelist.setBucket(investor1, generalBucket, '0x4000000000000000000000000000000000000000000000000000000000000000', {from: validator});
+        await whitelist.setBucket(investor2, generalBucket, '0x4000000000000000000000000000000000000000000000000000000000000000', {from: validator});
 
         let token = await SecurityToken.at(tokenAddress);
         await token.issueByTranche(trancheUnrestricted, investor1, 1000, dataIssuing, {from: operator1});

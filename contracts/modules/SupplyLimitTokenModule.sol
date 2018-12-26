@@ -1,7 +1,9 @@
 pragma solidity ^0.5.0;
 
 import "../utils/Factory.sol";
-import "./TokenModule.sol";
+import "../tokens/ISecurityToken.sol";
+import "../tokens/TokenModule.sol";
+import "./Module.sol";
 
 contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     uint256 public limit;
@@ -14,10 +16,10 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[] memory)
+    public view returns(Module.Feature[] memory)
     {
-        TokenModule.Feature[] memory features = new TokenModule.Feature[](1);
-        features[0] = TokenModule.Feature.TransferValidator;
+        Module.Feature[] memory features = new Module.Feature[](1);
+        features[0] = Module.Feature.TransferValidator;
         return features;
     }
 
@@ -27,7 +29,7 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
     {
         if (from == address(0)) {
             // this is an issuance of tokens
-            SecurityToken token = SecurityToken(tokenAddress);
+            ISecurityToken token = ISecurityToken(tokenAddress);
             if ((token.totalSupply() + amount) > limit) {
                 return (0xA8, "Supply limit reached");
             }
@@ -37,15 +39,12 @@ contract SupplyLimitTokenModule is TransferValidatorTokenModule,TokenModule {
 }
 
 contract SupplyLimitTokenModuleFactory is Factory {
-    function createInstance(address _tokenAddress, uint256 _limit)
+    function createInstance(address tokenAddress, uint256 limit)
     public returns(address)
     {
-        SupplyLimitTokenModule instance = new SupplyLimitTokenModule(_tokenAddress, _limit);
+        SupplyLimitTokenModule instance = new SupplyLimitTokenModule(tokenAddress, limit);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
-        // attach module to token
-        SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(address(instance));
         return address(instance);
     }
 }

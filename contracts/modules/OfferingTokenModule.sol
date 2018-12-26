@@ -1,8 +1,9 @@
 pragma solidity ^0.5.0;
 
 import "../utils/Factory.sol";
-import "./TokenModule.sol";
 import "../utils/Pausable.sol";
+import "../tokens/TokenModule.sol";
+import "./Module.sol";
 
 contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausable {
     uint256 public start;
@@ -17,10 +18,10 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[] memory)
+    public view returns(Module.Feature[] memory)
     {
-        TokenModule.Feature[] memory features = new TokenModule.Feature[](1);
-        features[0] = TokenModule.Feature.TransferValidator;
+        Module.Feature[] memory features = new Module.Feature[](1);
+        features[0] = Module.Feature.TransferValidator;
         return features;
     }
 
@@ -34,7 +35,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         require(now <= end, "The offering has finished already");
         byte res;
         string memory message;
-        SecurityToken token = SecurityToken(tokenAddress);
+        ISecurityToken token = ISecurityToken(tokenAddress);
         for (uint i = 0; i < investors.length; i++) {
             (res, message, ) = token.canTransfer(tranches[i], msg.sender, address(0), investors[i], amounts[i], abi.encodePacked("issuing"));
             if (res != 0xA0 && res != 0xA1 && res != 0xA2 && res != 0xAF) {
@@ -54,7 +55,7 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
         require(now < start, "The offering has started already");
         byte res;
         string memory message;
-        SecurityToken token = SecurityToken(tokenAddress);
+        ISecurityToken token = ISecurityToken(tokenAddress);
         for (uint i = 0; i < investors.length; i++) {
             (res, message, ) = token.canTransfer(tranches[i], msg.sender, address(0), investors[i], amounts[i], abi.encodePacked("reservation"));
             if (res != 0xA0 && res != 0xA1 && res != 0xA2 && res != 0xAF) {
@@ -97,15 +98,12 @@ contract OfferingTokenModule is TransferValidatorTokenModule,TokenModule,Pausabl
 }
 
 contract OfferingTokenModuleFactory is Factory {
-    function createInstance(address _tokenAddress, uint256 _start, uint256 _end)
+    function createInstance(address tokenAddress, uint256 start, uint256 end)
     public returns(address)
     {
-        OfferingTokenModule instance = new OfferingTokenModule(_tokenAddress, _start, _end);
+        OfferingTokenModule instance = new OfferingTokenModule(tokenAddress, start, end);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
-        // attach module to token
-        SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(address(instance));
         return address(instance);
     }
 }

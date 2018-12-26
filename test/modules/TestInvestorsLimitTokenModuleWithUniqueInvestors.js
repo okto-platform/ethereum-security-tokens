@@ -39,29 +39,32 @@ contract('InvestorsLimitTokenModuleFactory', async(accounts) => {
     let investorId4 = web3.utils.fromUtf8('investor4');
 
     it('configure module', async() => {
-        let tokenFactory = await SecurityTokenFactory.deployed();
-        await tokenFactory.createInstance('Token A', 'TOKA', 18, [owner, operator1, operator2], {from: owner});
-        let tokensCount = await tokenFactory.getInstancesCount.call();
-        tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
-
         let whitelistFactory = await StandardWhitelistFactory.deployed();
-        await whitelistFactory.createInstance(tokenAddress, [validator], [], [], [], [], {from: owner});
+        await whitelistFactory.createInstance([validator], [], [], [], [], {from: owner});
         let whitelistsCount = await whitelistFactory.getInstancesCount.call();
         whitelistAddress = await whitelistFactory.getInstance.call(whitelistsCount - 1);
         let whitelist = await StandardWhitelist.at(whitelistAddress);
+
+        let tokenFactory = await SecurityTokenFactory.deployed();
+        await tokenFactory.createInstance('Token A', 'TOKA', 18, whitelistAddress, [owner, operator1, operator2], {from: owner});
+        let tokensCount = await tokenFactory.getInstancesCount.call();
+        tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
+
+        let moduleFactory = await InvestorsLimitTokenModuleFactory.deployed();
+        await moduleFactory.createInstance(tokenAddress, 2, true, {from: owner});
+        let modulesCount = await moduleFactory.getInstancesCount.call();
+        moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
+
+        whitelist.addModule(moduleAddress, {from: owner});
+        let token = await SecurityToken.at(tokenAddress);
+        await token.addModule(moduleAddress, {from: owner});
+        await token.release({from: owner});
+
         await whitelist.setBucket(investor1, investorIdBucket, investorId1, {from: validator});
         await whitelist.setBucket(investor2, investorIdBucket, investorId2, {from: validator});
         await whitelist.setBucket(investor3a, investorIdBucket, investorId3, {from: validator});
         await whitelist.setBucket(investor3b, investorIdBucket, investorId3, {from: validator});
         await whitelist.setBucket(investor3c, investorIdBucket, investorId3, {from: validator});
-
-        let moduleFactory = await InvestorsLimitTokenModuleFactory.deployed();
-        await moduleFactory.createInstance(tokenAddress, 2, whitelistAddress, investorIdBucket, {from: owner});
-        let modulesCount = await moduleFactory.getInstancesCount.call();
-        moduleAddress = await moduleFactory.getInstance.call(modulesCount - 1);
-
-        let token = await SecurityToken.at(tokenAddress);
-        await token.release({from: owner});
     });
 
 

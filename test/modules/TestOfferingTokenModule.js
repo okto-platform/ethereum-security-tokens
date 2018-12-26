@@ -55,10 +55,11 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
     let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
     let dataOperatorTransfer = padBytes32(web3.utils.fromUtf8('operatorTransfer'));
 
+    let nullAddress = '0x0000000000000000000000000000000000000000';
 
     it('configure module', async() => {
         let tokenFactory = await SecurityTokenFactory.deployed();
-        await tokenFactory.createInstance('Token A', 'TOKA', 18, [owner, operator1, operator2], {from: owner});
+        await tokenFactory.createInstance('Token A', 'TOKA', 18, nullAddress, [owner, operator1, operator2], {from: owner});
         let tokensCount = await tokenFactory.getInstancesCount.call();
         tokenAddress = await tokenFactory.getInstance.call(tokensCount - 1);
 
@@ -72,8 +73,12 @@ contract('OfferingTokenModuleFactory', async(accounts) => {
         // the limit module is to test error handling when issuing tokens
         let limitModuleFactory = await SupplyLimitTokenModuleFactory.deployed();
         await limitModuleFactory.createInstance(tokenAddress, 1000000, {from: owner});
+        let limitModulesCount = await limitModuleFactory.getInstancesCount.call();
+        limitModuleAddress = await limitModuleFactory.getInstance.call(limitModulesCount - 1);
 
         let token = await SecurityToken.at(tokenAddress);
+        await token.addModule(moduleAddress, {from: owner});
+        await token.addModule(limitModuleAddress, {from: owner});
         await token.release({from: owner});
     });
 

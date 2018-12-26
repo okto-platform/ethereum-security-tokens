@@ -23,9 +23,11 @@ contract('SecurityTokenFactory', async(accounts) => {
     let dataIssuing = padBytes32(web3.utils.fromUtf8('issuing'));
     let dataUserTransfer = padBytes32(web3.utils.fromUtf8('userTransfer'));
 
+    let nullAddress = '0x0000000000000000000000000000000000000000';
+
     it('create token', async() => {
         let factory = await SecurityTokenFactory.deployed();
-        await factory.createInstance('Token A', 'TOKA', 18, [owner, operator1, operator2], {from: owner});
+        await factory.createInstance('Token A', 'TOKA', 18, nullAddress, [owner, operator1, operator2], {from: owner});
         let tokensCount = await factory.getInstancesCount.call();
         tokenAddress = await factory.getInstance.call(tokensCount - 1);
         let token = await SecurityToken.at(tokenAddress);

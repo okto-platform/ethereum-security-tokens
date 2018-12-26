@@ -30,8 +30,8 @@ import "./Whitelist.sol";
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 contract StandardWhitelist is Whitelist {
-    constructor(address tokenAddress, address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
-    Whitelist(tokenAddress, validators, codes, buckets, froms, lens)
+    constructor(address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
+    Whitelist(validators, codes, buckets, froms, lens)
     public
     {
         // define this standard properties; if they were also passed in the constructor
@@ -110,10 +110,10 @@ contract StandardWhitelist is Whitelist {
 }
 
 contract StandardWhitelistFactory is Factory {
-    function createInstance(address tokenAddress, address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
+    function createInstance(address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
     public returns(address)
     {
-        StandardWhitelist instance = new StandardWhitelist(tokenAddress, validators, codes, buckets, froms, lens);
+        StandardWhitelist instance = new StandardWhitelist(validators, codes, buckets, froms, lens);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
         return address(instance);

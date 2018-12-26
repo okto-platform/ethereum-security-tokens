@@ -2,54 +2,62 @@ pragma solidity ^0.5.0;
 
 import "../utils/SafeMath.sol";
 import "../utils/Factory.sol";
-import "./TokenModule.sol";
-import "../whitelists/Whitelist.sol";
+import "../whitelists/IWhitelist.sol";
 import "../whitelists/WhitelistModule.sol";
+import "../tokens/ISecurityToken.sol";
+import "../tokens/TokenModule.sol";
+import "./Module.sol";
 
 contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListenerTokenModule,TokenModule,WhitelistModule {
     using SafeMath for uint256;
 
+    bytes32 constant INVESTOR_ID_PROP = bytes32("investorId");
+
     uint256 public limit;
+    bool public checkInvestorId;
+
     uint256 public numberOfInvestors;
     bytes32 investorIdProperty;
     mapping(bytes32 => uint256) balancePerInvestor;
 
-    constructor(address _tokenAddress, uint256 _limit, address _whitelistAddress, bytes32 _investorIdProperty)
+    constructor(address _tokenAddress, address _whitelistAddress, uint256 _limit, bool _checkInvestorId)
     TokenModule(_tokenAddress, "investorsLimit")
     WhitelistModule(_whitelistAddress, "investorsLimit")
     public
     {
         require(_limit > 0, "Limit must be greater than zero");
-        require(_whitelistAddress == address(0) || _investorIdProperty != bytes32(0), "Investor ID property must be defined");
+        ISecurityToken token = ISecurityToken(tokenAddress);
+        require(token.whitelistAddress() == _whitelistAddress, "Whitelist must be the same as the whitelist in the token");
 
         limit = _limit;
-        investorIdProperty = _investorIdProperty;
+        checkInvestorId = _checkInvestorId;
     }
 
     function getFeatures()
-    public view returns(TokenModule.Feature[] memory)
+    public view returns(Module.Feature[] memory)
     {
-        TokenModule.Feature[] memory features = new TokenModule.Feature[](2);
-        features[0] = TokenModule.Feature.TransferValidator;
-        features[1] = TokenModule.Feature.TransferListener;
+        Module.Feature[] memory features = new Module.Feature[](3);
+        features[0] = Module.Feature.TransferValidator;
+        features[1] = Module.Feature.TransferListener;
+        features[2] = Module.Feature.WhitelistListener;
         return features;
     }
 
     function validateTransfer(bytes32, bytes32, address, address from, address to, uint256 amount, bytes memory)
     public view returns (byte, string memory)
     {
-        SecurityToken token = SecurityToken(tokenAddress);
+        ISecurityToken token = ISecurityToken(tokenAddress);
         uint256 diff;
-        if (whitelistAddress != address(0)) {
+        if (checkInvestorId) {
             // validate using balance per investor
-            Whitelist whitelist = Whitelist(whitelistAddress);
+            IWhitelist whitelist = IWhitelist(whitelistAddress);
             bytes32 fromInvestorId;
             bytes32 toInvestorId;
             if (from != address(0)) {
-                fromInvestorId = whitelist.getProperty(from, investorIdProperty);
+                fromInvestorId = whitelist.getProperty(from, INVESTOR_ID_PROP);
             }
             if (to != address(0)) {
-                toInvestorId = whitelist.getProperty(to, investorIdProperty);
+                toInvestorId = whitelist.getProperty(to, INVESTOR_ID_PROP);
             }
             if (to != address(0) && balancePerInvestor[toInvestorId] == 0) {
                 // if the sender is transferring all its tokens, then we can assume there will be one investor less
@@ -73,20 +81,21 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
     }
 
     function transferDone(bytes32, bytes32, address, address from, address to, uint256 amount, bytes memory)
+    onlyToken
     public
     {
-        SecurityToken token = SecurityToken(tokenAddress);
-        if (whitelistAddress != address(0)) {
+        ISecurityToken token = ISecurityToken(tokenAddress);
+        if (checkInvestorId) {
             // if there is a whitelist we should take into account balancer per investor instead of per wallet
-            Whitelist whitelist = Whitelist(whitelistAddress);
+            IWhitelist whitelist = IWhitelist(whitelistAddress);
             bytes32 fromInvestorId;
             bytes32 toInvestorId;
             if (from != address(0)) {
-                fromInvestorId = whitelist.getProperty(from, investorIdProperty);
+                fromInvestorId = whitelist.getProperty(from, INVESTOR_ID_PROP);
                 balancePerInvestor[fromInvestorId] = balancePerInvestor[fromInvestorId].sub(amount);
             }
             if (to != address(0)) {
-                toInvestorId = whitelist.getProperty(to, investorIdProperty);
+                toInvestorId = whitelist.getProperty(to, INVESTOR_ID_PROP);
                 balancePerInvestor[toInvestorId] = balancePerInvestor[toInvestorId].add(amount);
             }
             if (to != address(0) && balancePerInvestor[toInvestorId] == amount) {
@@ -113,8 +122,8 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
     onlyWhitelist
     public
     {
-        if (bucket == investorIdProperty && newValue != oldValue) {
-            SecurityToken token = SecurityToken(tokenAddress);
+        if (bucket == INVESTOR_ID_PROP && newValue != oldValue) {
+            ISecurityToken token = ISecurityToken(tokenAddress);
             uint256 balanceOfAddress = token.balanceOf(investor);
             // move balance of the address to the new investor
             balancePerInvestor[oldValue] = balancePerInvestor[oldValue].sub(balanceOfAddress);
@@ -135,19 +144,14 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
 }
 
 contract InvestorsLimitTokenModuleFactory is Factory {
-    function createInstance(address _tokenAddress, uint256 _limit, bytes32 _investorIdProperty)
+    function createInstance(address tokenAddress, uint256 limit, bool checkInvestorId)
     public returns(address)
     {
-        InvestorsLimitTokenModule instance = new InvestorsLimitTokenModule(_tokenAddress, _limit, _investorIdProperty);
+        ISecurityToken token = ISecurityToken(tokenAddress);
+        address whitelistAddress = token.whitelistAddress();
+        InvestorsLimitTokenModule instance = new InvestorsLimitTokenModule(tokenAddress, whitelistAddress, limit, checkInvestorId);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
-        // attach module to token
-        SecurityToken token = SecurityToken(_tokenAddress);
-        token.addModule(address(instance));
-        if (token.whitelistAddress() != address(0)) {
-            Whitelist whitelist = Whitelist(token.whitelistAddress());
-            whitelist.addModule(address(instance));
-        }
         return address(instance);
     }
 }
