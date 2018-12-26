@@ -173,23 +173,23 @@ Some modules that could be created are:
 These are the current contract addresses of the factories on Ropsten:
 
 ```
-SecurityTokenFactory                 => 0xd07c95ce7323c558cf1c793a832cbfe2f4c31ccb
-RestrictSenderTokenModuleFactory     => 0x7444be0f6e2ab2a09c49762310d752ca62559edb
-KycTokenModuleFactory                => 0xddc2f4df1e0f5e705dd41b50a02265671209f8ce
-InvestorsLimitTokenModuleFactory     => 0xe31797373defd2d0bdc4f07c00cf3a4f923feabf
-SupplyLimitTokenModuleFactory        => 0x64332ea04ffcfadd26c7acd7bea5318091c21a93
-ForcedTransferTokenModuleFactory     => 0xdb3a8fe37ad6f2832cdbc63d53ba777af0ad4485
-OfferingTokenModuleFactory           => 0x985c000df75fe29dd070cc0c3abe5d2792795c64
-WhitelistFactory                     => 0xa605dba2bd72079e8b2c570176a810e059875d83
-StandardWhitelistFactory             => 0x0d7ce998d79c87a323043f7b0cb20e069da4c3ea
+SecurityTokenFactory                 => 0x90A72deBA74d04bdC11c66429bcDeDa9C787De70
+RestrictSenderTokenModuleFactory     => 0x83d07312CE1d15832791574b8208056731e9bFB0
+KycTokenModuleFactory                => 0xA1F2CDeD2FEef1C7Fe4E51064A7fDE47fCE06747
+InvestorsLimitTokenModuleFactory     => 0xBaFc429eC807E211e3B6811213f01f8cFE979a04
+SupplyLimitTokenModuleFactory        => 0x1C7a97a80d083ddb6d41BC271Fc7356096d065E9
+ForcedTransferTokenModuleFactory     => 0xF0C652bfAfA7D682f84451E29278B377699c59e3
+OfferingTokenModuleFactory           => 0x6A96bd1C23cF6230FBF4547e0333923437C2716d
+WhitelistFactory                     => 0xEB69F4703EeFEf5e640c076447F6fd723CFeb97f
+StandardWhitelistFactory             => 0xf27597371C54628403eb665946CE3616800F5D14
 MultiSigWalletFactory                => 0x6eedb6f85012c57a2789860ad27eee8be7821d8e
 ```
 
 Libraries:
 
 ```
-AddressArrayLib  => 0xdd941feea98545fe15ceabed13549433d8d5835c
-Bytes32ArrayLib  => 0xa7db2798b6f88bd49f61c5c59842ef0b4ca147c2
+AddressArrayLib  => 0x3C904f91aBBc45195f33Db5336c0C20Ba6cBe242
+Bytes32ArrayLib  => 0x44736Ba37e0304B8075E0f825e027991AbC73f4E
 ```
 
 ## Disclaimer
