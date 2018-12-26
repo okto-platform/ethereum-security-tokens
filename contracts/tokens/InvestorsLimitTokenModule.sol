@@ -135,17 +135,17 @@ contract InvestorsLimitTokenModule is TransferValidatorTokenModule,TransferListe
 }
 
 contract InvestorsLimitTokenModuleFactory is Factory {
-    function createInstance(address _tokenAddress, uint256 _limit, address _whitelistAddress, bytes32 _investorIdProperty)
+    function createInstance(address _tokenAddress, uint256 _limit, bytes32 _investorIdProperty)
     public returns(address)
     {
-        InvestorsLimitTokenModule instance = new InvestorsLimitTokenModule(_tokenAddress, _limit, _whitelistAddress, _investorIdProperty);
+        InvestorsLimitTokenModule instance = new InvestorsLimitTokenModule(_tokenAddress, _limit, _investorIdProperty);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
         // attach module to token
         SecurityToken token = SecurityToken(_tokenAddress);
         token.addModule(address(instance));
-        if (_whitelistAddress != address(0)) {
-            Whitelist whitelist = Whitelist(_whitelistAddress);
+        if (token.whitelistAddress() != address(0)) {
+            Whitelist whitelist = Whitelist(token.whitelistAddress());
             whitelist.addModule(address(instance));
         }
         return address(instance);

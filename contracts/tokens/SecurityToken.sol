@@ -22,6 +22,7 @@ contract ISecurityToken is Pausable {
     string public name;
     string public symbol;
     uint8 public decimals;
+    address public whitelistAddress;
     address[] public operators;
     bool public released;
 
@@ -110,12 +111,13 @@ contract SecurityToken is ISecurityToken {
     //
     ///////////////////////////////////////////////////////////////////////////
 
-    constructor(string memory _name, string memory _symbol, uint8 _decimals, address[] memory _operators)
+    constructor(string memory _name, string memory _symbol, uint8 _decimals, address _whitelistAddress, address[] memory _operators)
     public
     {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
+        whitelistAddress = _whitelistAddress;
         operators = _operators;
     }
 
@@ -394,10 +396,10 @@ contract SecurityToken is ISecurityToken {
 
 
 contract SecurityTokenFactory is Factory {
-    function createInstance(string memory name, string memory symbol, uint8 decimals, address[] memory operators)
+    function createInstance(string memory name, string memory symbol, uint8 decimals, address whitelistAddress, address[] memory operators)
     public returns(address)
     {
-        SecurityToken instance = new SecurityToken(name, symbol, decimals, operators);
+        SecurityToken instance = new SecurityToken(name, symbol, decimals, whitelistAddress, operators);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
         return address(instance);

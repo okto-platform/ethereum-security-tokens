@@ -4,7 +4,6 @@ import "../utils/Ownable.sol";
 import "../utils/Factory.sol";
 import "../utils/AddressArrayLib.sol";
 import "./WhitelistModule.sol";
-import "../tokens/SecurityToken.sol";
 
 contract Whitelist is Ownable {
     using AddressArrayLib for address[];
@@ -16,7 +15,6 @@ contract Whitelist is Ownable {
         uint16 len;
     }
 
-    address public tokenAddress;
     address[] public validators;
     mapping(address => mapping (bytes32 => bytes32)) properties;
     mapping(bytes32 => Property) propertiesDefinition;
@@ -27,26 +25,13 @@ contract Whitelist is Ownable {
         _;
     }
 
-    modifier onlyOwnerTx() {
-        require(msg.sender == owner || tx.origin == owner);
-        _;
-    }
-
-    modifier isDraft() {
-        SecurityToken token = SecurityToken(tokenAddress);
-        require(!token.released(), "Token is already released");
-        _;
-    }
-
-    constructor(address _tokenAddress, address[] memory _validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
+    constructor(address[] memory _validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
     public
     {
-        require(_tokenAddress != address(0), "Token address is required");
         require(codes.length == buckets.length, "Different number of properties and buckets");
         require(codes.length == froms.length, "Different number of properties and indexes");
         require(codes.length == lens.length, "Different number of properties and lengths");
 
-        tokenAddress = _tokenAddress;
         validators = _validators;
 
         for (uint i = 0; i < codes.length; i++) {
@@ -161,7 +146,7 @@ contract Whitelist is Ownable {
     }
 
     function addModule(address moduleAddress)
-    onlyOwnerTx isDraft
+    onlyOwner
     public
     {
         require(moduleAddress != address(0), "Module address is required");
@@ -174,7 +159,7 @@ contract Whitelist is Ownable {
     }
 
     function removeModule(address moduleAddress)
-    onlyOwnerTx isDraft
+    onlyOwner
     public
     {
         modules.removeValue(moduleAddress);
@@ -197,10 +182,10 @@ contract Whitelist is Ownable {
 }
 
 contract WhitelistFactory is Factory {
-    function createInstance(address tokenAddress, address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
+    function createInstance(address[] memory validators, bytes32[] memory codes, bytes32[] memory buckets, uint8[] memory froms, uint16[] memory lens)
     public returns(address)
     {
-        Whitelist instance = new Whitelist(tokenAddress, validators, codes, buckets, froms, lens);
+        Whitelist instance = new Whitelist(validators, codes, buckets, froms, lens);
         instance.transferOwnership(msg.sender);
         addInstance(address(instance));
         return address(instance);
