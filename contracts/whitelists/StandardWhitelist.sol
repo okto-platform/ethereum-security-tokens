@@ -18,6 +18,7 @@ import "./Whitelist.sol";
 // Insider                            index 143, length   1 bits
 // Lockup expiration                  index 144, length  40 bits
 // ATS                                index 184, length   1 bits
+// Blocked                            index 185, length   1 bits
 // Investor ID Bucket ------------------------------------------
 // Investor ID                        index   0, length 256 bits
 // KYC Reference Bucket ----------------------------------------
@@ -86,6 +87,11 @@ contract StandardWhitelist is Whitelist {
         propertiesDefinition[bytes32("ats")].bucket = bytes32("general");
         propertiesDefinition[bytes32("ats")].from = 184;
         propertiesDefinition[bytes32("ats")].len = 1;
+
+        propertiesDefinition[bytes32("blocked")].code = bytes32("blocked");
+        propertiesDefinition[bytes32("blocked")].bucket = bytes32("general");
+        propertiesDefinition[bytes32("blocked")].from = 185;
+        propertiesDefinition[bytes32("blocked")].len = 1;
 
         propertiesDefinition[bytes32("investorId")].code = bytes32("investorId");
         propertiesDefinition[bytes32("investorId")].bucket = bytes32("investorId");
